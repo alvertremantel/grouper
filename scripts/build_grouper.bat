@@ -13,6 +13,15 @@ set ICON=%PROJECT_ROOT%\grouper\assets\icon.ico
 
 cd /d "%PROJECT_ROOT%"
 
+set NUITKA_LTO_FLAG=
+if defined GROUPER_NUITKA_LTO (
+    if /i not "%GROUPER_NUITKA_LTO%"=="yes" if /i not "%GROUPER_NUITKA_LTO%"=="no" (
+        echo ERROR: GROUPER_NUITKA_LTO must be yes or no. Got "%GROUPER_NUITKA_LTO%".
+        exit /b 1
+    )
+    set NUITKA_LTO_FLAG=--lto=%GROUPER_NUITKA_LTO%
+)
+
 REM --- Preflight checks ---
 
 python -c "import nuitka" 2>nul
@@ -47,6 +56,7 @@ echo ============================================================
 echo  Grouper — Main Application Build
 echo ============================================================
 echo.
+if defined GROUPER_NUITKA_LTO echo Nuitka LTO mode: %GROUPER_NUITKA_LTO%
 
 echo Building grouper.exe (standalone)...
 python -m nuitka ^
@@ -61,7 +71,9 @@ python -m nuitka ^
     --include-package=grouper_core.database.migrations ^
     --include-package=grouper_server.sync ^
     %ICON_FLAG% ^
-    %OPTIONAL_SYNC_FLAGS% --output-filename=grouper.exe ^
+    %NUITKA_LTO_FLAG% ^
+    %OPTIONAL_SYNC_FLAGS% ^
+    --output-filename=grouper.exe ^
     --output-dir=dist ^
     --jobs=2 ^
     grouper\main.py
@@ -75,7 +87,15 @@ if errorlevel 1 (
 if exist "dist\grouper.dist" rmdir /s /q "dist\grouper.dist"
 if exist "dist\grouper.build" rmdir /s /q "dist\grouper.build"
 move /y "dist\main.dist" "dist\grouper.dist" >nul
+if errorlevel 1 (
+    echo ERROR: Failed to rename dist\main.dist to dist\grouper.dist
+    exit /b 1
+)
 move /y "dist\main.build" "dist\grouper.build" >nul
+if errorlevel 1 (
+    echo ERROR: Failed to rename dist\main.build to dist\grouper.build
+    exit /b 1
+)
 
 echo.
 echo ============================================================

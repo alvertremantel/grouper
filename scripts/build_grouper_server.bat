@@ -12,6 +12,15 @@ set PROJECT_ROOT=%SCRIPT_DIR%..
 
 cd /d "%PROJECT_ROOT%"
 
+set NUITKA_LTO_FLAG=
+if defined GROUPER_NUITKA_LTO (
+    if /i not "%GROUPER_NUITKA_LTO%"=="yes" if /i not "%GROUPER_NUITKA_LTO%"=="no" (
+        echo ERROR: GROUPER_NUITKA_LTO must be yes or no. Got "%GROUPER_NUITKA_LTO%".
+        exit /b 1
+    )
+    set NUITKA_LTO_FLAG=--lto=%GROUPER_NUITKA_LTO%
+)
+
 REM --- Preflight checks ---
 
 python -c "import nuitka" 2>nul
@@ -50,6 +59,7 @@ echo ============================================================
 echo  Grouper — Server Build
 echo ============================================================
 echo.
+if defined GROUPER_NUITKA_LTO echo Nuitka LTO mode: %GROUPER_NUITKA_LTO%
 
 echo Building grouper-server.exe (standalone)...
 python -m nuitka ^
@@ -60,7 +70,9 @@ python -m nuitka ^
     --include-package=grouper_core.database.migrations ^
     --include-package=grouper_server.sync ^
     --include-package=grouper_server.web ^
-    %OPTIONAL_SERVER_FLAGS% --output-filename=grouper-server.exe ^
+    %NUITKA_LTO_FLAG% ^
+    %OPTIONAL_SERVER_FLAGS% ^
+    --output-filename=grouper-server.exe ^
     --output-dir=dist ^
     --jobs=2 ^
     grouper_server\__main__.py
@@ -74,7 +86,15 @@ if errorlevel 1 (
 if exist "dist\grouper-server.dist" rmdir /s /q "dist\grouper-server.dist"
 if exist "dist\grouper-server.build" rmdir /s /q "dist\grouper-server.build"
 move /y "dist\__main__.dist" "dist\grouper-server.dist" >nul
+if errorlevel 1 (
+    echo ERROR: Failed to rename dist\__main__.dist to dist\grouper-server.dist
+    exit /b 1
+)
 move /y "dist\__main__.build" "dist\grouper-server.build" >nul
+if errorlevel 1 (
+    echo ERROR: Failed to rename dist\__main__.build to dist\grouper-server.build
+    exit /b 1
+)
 
 echo.
 echo ============================================================
