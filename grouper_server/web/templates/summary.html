@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set title = "Summary" %}
+{% set refresh = 30 %}
+{% block content %}
+<div class="section">
+  <h2>Last {{ days }} Days</h2>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total ({{ days }} days)</div>
+      <div class="stat-value">{{ fmt_hours(total_secs) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Activities tracked</div>
+      <div class="stat-value">{{ num_activities }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Open tasks</div>
+      <div class="stat-value">{{ num_open_tasks }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Overdue</div>
+      <div class="stat-value" style="color:{{ palette['danger'] }}">{{ num_overdue }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Due today</div>
+      <div class="stat-value" style="color:{{ palette['warning'] }}">{{ num_due_today }}</div>
+    </div>
+  </div>
+</div>
+<div class="section">
+  <h2>Time by Activity</h2>
+  {% if not top_activities %}
+  <p class="empty-state">No sessions in the last 7 days.</p>
+  {% else %}
+  {% for name, secs in top_activities %}
+  <div class="bar-row">
+    <span class="bar-label" title="{{ name|e }}">{{ name|e }}</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:{{ (secs / max_secs * 100)|int }}%"></div></div>
+    <span class="bar-time">{{ fmt_seconds(secs) }}</span>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

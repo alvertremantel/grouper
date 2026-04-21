@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% set title = "Tasks" %}
+{% set refresh = 30 %}
+{% block content %}
+{% if not boards %}
+<p class="empty-state">No boards found.</p>
+{% else %}
+{% for bd in boards %}
+<div class="board-section">
+  <div class="board-label">{{ bd.board.name|e }} &mdash; {{ bd.total_tasks }} open task{{ "s" if bd.total_tasks != 1 else "" }}</div>
+  {% if not bd.projects %}
+  <p class="empty-state">No open tasks.</p>
+  {% else %}
+  {% for pd in bd.projects %}
+  <div class="project-block">
+    <h3>{{ pd.project.name|e }}</h3>
+    {% for t in pd.tasks %}
+    <div class="card">
+      <div class="card-row">
+        <span class="card-title">{{ priority_chip(t.priority) }}{{ t.title|e }}</span>
+        {{ due_span(t.due_date, now=now) }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,244 @@
+Grouper — Third-Party Software Notices
+=======================================
+
+Grouper includes components from open-source projects. Their licenses and
+copyright notices are reproduced below as required.
+
+This file covers all third-party software shipped in the Grouper release.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1 — LGPL COMPONENTS (PySide6, shiboken6, Qt)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The following files are licensed under the GNU Lesser General Public License
+version 3 (LGPL-3.0-only), and are distributed alongside this application as
+separate, dynamically-linked libraries:
+
+  app/pyside6.abi3.dll
+  app/shiboken6.abi3.dll
+  app/shiboken6/Shiboken.pyd
+  app/PySide6/QtCore.pyd
+  app/PySide6/QtGui.pyd
+  app/PySide6/QtNetwork.pyd
+  app/PySide6/QtSvg.pyd
+  app/PySide6/QtWidgets.pyd
+  app/qt6core.dll
+  app/qt6gui.dll
+  app/qt6network.dll
+  app/qt6pdf.dll
+  app/qt6svg.dll
+  app/qt6widgets.dll
+  app/PySide6/qt-plugins/**
+
+These files are copyright (c) The Qt Company Ltd. and individual contributors.
+The full text of the LGPL-3.0 license is in the file LGPL-3.0.txt distributed
+alongside this notice.
+
+RELINKING NOTICE
+  In compliance with LGPL-3.0 Section 4, you are permitted to replace any of
+  the above library files with a compatible modified version. Because these
+  libraries are loaded as standard Windows DLLs/PYDs at runtime, you may
+  substitute them by replacing the corresponding files in the app/ directory.
+  The Grouper executable (grouper.exe) does not statically embed these
+  libraries and will use whatever compatible version is present.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2 — MIT LICENSED COMPONENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----
+
+anyio 4.12.1
+  Copyright (c) 2018 Alex Grönholm
+
+annotated-types 0.7.0
+  Copyright (c) 2022 the contributors
+
+attrs 25.4.0
+  Copyright (c) 2015 Hynek Schlawack and the attrs contributors
+
+cffi 2.0.0
+  (MIT No Attribution — no copyright notice required)
+
+h11 0.16.0
+  Copyright (c) 2016 Nathaniel J. Smith <njs@pobox.com> and other contributors
+
+httpx-sse 0.4.3
+  Copyright (c) 2022 Florimond Manca
+
+iniconfig 2.3.0
+  Copyright (c) Ronny Pfannschmidt, Holger Krekel
+
+jsonschema 4.26.0
+  Copyright (c) 2013 Julian Berman
+
+jsonschema-specifications 2025.9.1
+  Copyright (c) 2022 Julian Berman
+
+mcp 1.26.0
+  Copyright (c) 2024 Anthropic, PBC
+
+pydantic 2.12.5
+  Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors
+
+pydantic-core 2.41.5
+  Copyright (c) 2022 Samuel Colvin
+
+pydantic-settings 2.13.1
+  Copyright (c) 2022 Samuel Colvin and other contributors
+
+PyJWT 2.12.1
+  Copyright (c) 2015-2022 José Padilla
+
+referencing 0.37.0
+  Copyright (c) 2022 Julian Berman
+
+rpds-py 0.30.0
+  Copyright (c) 2023 Julian Berman
+
+six 1.17.0
+  Copyright (c) 2010-2024 Benjamin Peterson
+
+typing-inspection 0.4.2
+  Copyright (c) 2025 Pydantic Services Inc.
+
+libffi (libffi-8.dll)
+  Copyright (c) 1996-2024 Anthony Green, Red Hat, Inc and others
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3 — BSD LICENSED COMPONENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BSD 3-Clause License
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+----
+
+click 8.3.1
+  Copyright (c) 2014 Pallets
+
+colorama 0.4.6
+  Copyright (c) 2010 Jonathan Hartley
+
+httpcore 1.0.9
+  Copyright (c) 2020 Encode OSS Ltd.
+
+httpx 0.28.1
+  Copyright (c) 2019 Encode OSS Ltd.
+
+idna 3.11
+  Copyright (c) 2013-2025 Kim Davies and contributors
+
+psutil 7.2.2
+  Copyright (c) 2009 Jay Loden, Dave Davin, Giampaolo Rodola
+
+pycparser 3.0
+  Copyright (c) 2008-2022 Eli Bendersky
+
+python-dotenv 1.2.2
+  Copyright (c) 2014 Saurabh Kumar; 2013 Ted Tieken; 2013 Jacob Kaplan-Moss
+
+pywin32 311
+  Copyright (c) 1994-2008 Mark Hammond
+
+sse-starlette 3.3.2
+  Copyright (c) 2020 sysid
+
+starlette 0.52.1
+  Copyright (c) 2018 Encode OSS Ltd.
+
+uvicorn 0.41.0
+  Copyright (c) 2017-present Encode OSS Ltd.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4 — APACHE 2.0 LICENSED COMPONENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use these files except in compliance with the License. You may obtain a copy
+of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+----
+
+cryptography 46.0.5
+  Copyright (c) The Python Cryptographic Authority and individual contributors
+
+python-dateutil 2.9.0.post0
+  Copyright 2017- Paul Ganssle <paul@ganssle.io>
+  Copyright 2017- dateutil contributors
+
+python-multipart 0.0.22
+  Copyright (c) 2012 Andrew Dunham
+
+OpenSSL (libcrypto-3.dll, libssl-3.dll)
+  Copyright (c) 1998-2024 The OpenSSL Project Authors
+  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5 — PYTHON SOFTWARE FOUNDATION LICENSE (PSF-2.0)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+typing_extensions 4.15.0
+CPython runtime (python3.dll, python314.dll)
+  Copyright (c) 2001-present Python Software Foundation. All Rights Reserved.
+
+  Licensed under the Python Software Foundation License Version 2.
+  See https://www.python.org/psf/license/ for the full license text.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6 — MOZILLA PUBLIC LICENSE 2.0 (MPL-2.0)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+certifi 2026.2.25
+
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, you can obtain one at https://mozilla.org/MPL/2.0/.
+
+  certifi bundles a collection of root certificates sourced from the Mozilla
+  CA Certificate Program. The certificates themselves are in the public
+  domain or licensed under permissive terms by their respective issuers.

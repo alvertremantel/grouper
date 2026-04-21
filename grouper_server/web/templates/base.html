@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+{% if refresh %}<meta http-equiv="refresh" content="{{ refresh }}">{% endif %}
+<title>Grouper &mdash; {{ title }}</title>
+<style>{{ css }}</style>
+</head>
+<body>
+<div class="page-header">
+<h1>Grouper</h1>
+<span class="ts">{{ now.strftime("%Y-%m-%d %H:%M:%S") }}</span>
+</div>
+<nav class="nav">
+  <a href="{{ url_for('dashboard') }}"{% if active_nav == "dashboard" %} class="active"{% endif %}>Dashboard</a>
+  <a href="{{ url_for('tasks') }}"{% if active_nav == "tasks" %} class="active"{% endif %}>Tasks</a>
+  <a href="{{ url_for('summary') }}"{% if active_nav == "summary" %} class="active"{% endif %}>Summary</a>
+</nav>
+{% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Development Artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+*.spec
+.pytest_cache/
+.ruff_cache/
+
+# Release Artifacts
+dist/
+release/
+
+# Harness Artifacts
+.agents/worktrees/
+.agents/plans/old/
+.agents/reviews/old/
+

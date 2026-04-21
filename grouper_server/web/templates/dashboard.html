@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% set title = "Dashboard" %}
+{% set refresh = 5 %}
+{% block content %}
+<div class="section">
+  <h2>Active Sessions <span class="badge badge-running">{{ active_sessions|length }}</span></h2>
+  {% if not active_sessions %}
+  <p class="empty-state">No active sessions.</p>
+  {% else %}
+  {% for s in active_sessions %}
+  <div class="card">
+    <div class="card-row">
+      <span class="card-title">{{ s.activity_name|e }}</span>
+      <span class="timer{% if s.is_paused %} paused{% endif %}">{{ s.format_duration() }}</span>
+    </div>
+    <div class="card-row" style="margin-top:4px">
+      <span class="card-meta">{{ s.start_time.strftime("%H:%M") if s.start_time else "" }}</span>
+      <span class="badge badge-{{ 'paused' if s.is_paused else 'running' }}">{{ "Paused" if s.is_paused else "Running" }}</span>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+<div class="section">
+  <h2>Upcoming Tasks</h2>
+  {% if not upcoming_tasks %}
+  <p class="empty-state">No tasks with due dates.</p>
+  {% else %}
+  {% for t in upcoming_tasks %}
+  <div class="card">
+    <div class="card-row">
+      <span class="card-title">{{ priority_chip(t.priority) }}{{ t.title|e }}</span>
+      {{ due_span(t.due_date, now=now) }}
+    </div>
+    {% if project_map.get(t.project_id) %}
+    <div class="card-meta" style="margin-top:3px">{{ project_map[t.project_id]|e }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+[project]
+name = "grouper"
+version = "1.1.0.23"
+description = "Grouper — a unified productivity hub for time tracking and task management"
+requires-python = ">=3.11"
+dependencies = [
+    "python-dateutil>=2.9",
+]
+
+[project.optional-dependencies]
+gui = [
+    "PySide6>=6.6",
+]
+sync = [
+    "zeroconf>=0.131",
+]
+web = [
+    "flask>=3.0",
+]
+tui = [
+    "textual>=0.50",
+]
+server = [
+    "flask>=3.0",
+    "zeroconf>=0.131",
+    "textual>=0.50",
+]
+test = [
+    "pytest>=8.0",
+    "pywinauto>=0.6.8; sys_platform == \"win32\"",
+    "psutil>=5.9",
+    "ruff>=0.9",
+    "ty>=0.0.1a1",
+    "mss>=9.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: tests taking >5 seconds",
+    "e2e: end-to-end tests launching the full app subprocess",
+    "widget: tests requiring a QApplication but not the full app",
+]
+addopts = "-v --tb=short --strict-markers"
+
+[tool.setuptools.packages.find]
+include = ["grouper*", "grouper_core*", "grouper_cli*", "grouper_server*"]
+
+[project.gui-scripts]
+grouper = "grouper.main:main"
+
+[project.scripts]
+grouper-cli = "grouper_cli.main:main"
+grouper-server = "grouper_server.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = []
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["grouper", "grouper_core", "grouper_cli", "grouper_server", "tests"]
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP", "B", "SIM", "RUF", "PT"]
+ignore = [
+    "E501",     # line length handled by formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+"**/__init__.py" = ["F401"]  # re-exports
+# Re-export shim modules: intentional star-imports and forwarded names
+"grouper/config.py" = ["F401", "F403"]
+"grouper/formatting.py" = ["F401", "F403"]
+"grouper/models.py" = ["F401", "F403"]
+"grouper/operations.py" = ["F401", "F403"]
+"grouper/styles/colors.py" = ["F401", "F403"]
+"grouper/database/activities.py" = ["F403"]
+"grouper/database/boards.py" = ["F403"]
+"grouper/database/calendars.py" = ["F403"]
+"grouper/database/connection.py" = ["F401"]
+"grouper/database/events.py" = ["F403"]
+"grouper/database/prerequisites.py" = ["F403"]
+"grouper/database/projects.py" = ["F403"]
+"grouper/database/sessions.py" = ["F403"]
+"grouper/database/settings.py" = ["F403"]
+"grouper/database/tags.py" = ["F403"]
+"grouper/database/task_links.py" = ["F403"]
+"grouper/database/tasks.py" = ["F403"]
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ty]
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
