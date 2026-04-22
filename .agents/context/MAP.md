@@ -18,6 +18,8 @@
 - `grouper_cli/__main__.py`: CLI entry
 - `grouper_server/__main__.py`: server entry
 - `grouper_install/setup.py`: installer UI and install/uninstall flow
+- `grouper/ui/dialogs.py`: shared frameless dialogs and dialog base behavior
+- `grouper/ui/activity_config.py`: activity editor flow that launches `AddGroupDialog`
 
 ## Installer Modules
 
@@ -34,3 +36,10 @@
 - `tests/cli/`: CLI tests
 - `tests/integration/`: cross-module tests
 - `tests/e2e/`: full Windows flows
+
+## Dialog / Theme Hotspots
+
+- `grouper/styles/_base.qss`: shared widget and dialog QSS
+- `grouper_core/colors.py`: theme palettes and dialog surface tokens
+- `tests/widget/test_transparency.py`: dialog contrast regressions, including parented dialog checks
+- `.agents/context/qt-pitfalls.md`: lessons learned from the dialog contrast investigation

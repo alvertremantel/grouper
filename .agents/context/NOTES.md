@@ -30,6 +30,10 @@ uv run ruff check .
 - Entry-point modules should use absolute imports for Nuitka builds.
 - Version checking uses the GitHub Releases API.
 - `dist/` and `release/` are gitignored.
+- For Qt visual bugs, prefer testing the exact shown widget hierarchy over `widget.grab()` alone.
+- Frameless top-level dialog translucency is suspect on this app; do not assume offscreen widget colors match on-screen composition.
+- `AddGroupDialog` is visually dominated by its inner `QListWidget`, not just the outer dialog frame.
+- See `.agents/context/qt-pitfalls.md` for the full dialog-contrast postmortem.
 
 ## Installer Notes
 
