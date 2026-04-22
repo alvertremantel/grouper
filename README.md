@@ -48,8 +48,8 @@ directory at any time from **Settings → Data → Move Data Directory**.
 ## Contact & Support
 
 - DM **@alvertremantel** on Threads
-- Email: contact@grouper.app <!-- FIXME(release): activate email before shipping -->
-- Bug reports: https://github.com/alvertremantel/grouper/issues  <!-- FIXME(release): publish repo before shipping -->
+- Email: geosminjones@gmail.com
+- Bug reports: https://github.com/alvertremantel/grouper/issues
 
 ---
 
