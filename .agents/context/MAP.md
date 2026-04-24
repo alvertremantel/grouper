@@ -35,7 +35,7 @@
 - `tests/widget/`: Qt widget tests
 - `tests/cli/`: CLI tests
 - `tests/integration/`: cross-module tests
-- `tests/e2e/`: full Windows flows
+- ~~`tests/e2e/`~~: removed; coverage replaced by faster widget tests
 
 ## Dialog / Theme Hotspots
 
@@ -43,4 +43,5 @@
 - `grouper_core/colors.py`: theme palettes and dialog surface tokens
 - `tests/widget/test_transparency.py`: dialog contrast regressions, including parented dialog checks
 - `tests/widget/test_theme_validation.py`: token coverage for dialog surface palette entries
+- `tests/widget/test_dialogs.py`: construction tests for all `FramelessDialog` subclasses
 - `.agents/context/qt-pitfalls.md`: lessons learned from the dialog contrast investigation

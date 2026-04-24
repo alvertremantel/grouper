@@ -678,6 +678,10 @@ class EditTaskDialog(FramelessDialog):
         prereqs = get_prerequisite_tasks(self.task.id)
         for pt in prereqs:
             if pt.id is None:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "Prerequisite task %r has no id; skipping chip", pt.title
+                )
                 continue
             text = f"{truncate_title(pt.title)} → this"
             chip = make_removable_chip(text, lambda pid=pt.id: self._remove_prereq(pid))

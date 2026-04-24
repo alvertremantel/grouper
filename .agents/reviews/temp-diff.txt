@@ -1,0 +1,2780 @@
+diff --git a/.agents/context/MAP.md b/.agents/context/MAP.md
+index 92b1d80..abbdb08 100644
+--- a/.agents/context/MAP.md
++++ b/.agents/context/MAP.md
+@@ -18,6 +18,8 @@
+ - `grouper_cli/__main__.py`: CLI entry
+ - `grouper_server/__main__.py`: server entry
+ - `grouper_install/setup.py`: installer UI and install/uninstall flow
++- `grouper/ui/dialogs.py`: shared frameless dialogs and dialog base behavior
++- `grouper/ui/activity_config.py`: activity editor flow that launches `AddGroupDialog`
+ 
+ ## Installer Modules
+ 
+@@ -34,3 +36,11 @@
+ - `tests/cli/`: CLI tests
+ - `tests/integration/`: cross-module tests
+ - `tests/e2e/`: full Windows flows
++
++## Dialog / Theme Hotspots
++
++- `grouper/styles/_base.qss`: shared widget and dialog QSS
++- `grouper_core/colors.py`: theme palettes and dialog surface tokens
++- `tests/widget/test_transparency.py`: dialog contrast regressions, including parented dialog checks
++- `tests/widget/test_theme_validation.py`: token coverage for dialog surface palette entries
++- `.agents/context/qt-pitfalls.md`: lessons learned from the dialog contrast investigation
+diff --git a/.agents/context/NOTES.md b/.agents/context/NOTES.md
+index b7ef3f4..f302d0c 100644
+--- a/.agents/context/NOTES.md
++++ b/.agents/context/NOTES.md
+@@ -30,6 +30,12 @@ uv run ruff check .
+ - Entry-point modules should use absolute imports for Nuitka builds.
+ - Version checking uses the GitHub Releases API.
+ - `dist/` and `release/` are gitignored.
++- For Qt visual bugs, prefer testing the exact shown widget hierarchy over `widget.grab()` alone.
++- Frameless top-level dialog translucency is suspect on this app; do not assume offscreen widget colors match on-screen composition.
++- `AddGroupDialog` is visually dominated by its inner `QListWidget`, not just the outer dialog frame.
++- For the black theme, `AddGroupDialog` should keep the standard black dialog surfaces; do not bring back the oversized solid list-row override from `example-2.png`.
++- Parent card selectors such as `#card QWidget { background-color: transparent; }` can bleed into parented dialogs; dialog selectors need enough specificity to preserve painted surfaces.
++- See `.agents/context/qt-pitfalls.md` for the full dialog-contrast postmortem.
+ 
+ ## Installer Notes
+ 
+diff --git a/.agents/context/STATUS.md b/.agents/context/STATUS.md
+index ddc9e66..14021ab 100644
+--- a/.agents/context/STATUS.md
++++ b/.agents/context/STATUS.md
+@@ -7,6 +7,7 @@
+ - Installer supports machine-wide install, elevation, PATH updates, manifest persistence, ARP registration, upgrade detection, and uninstall.
+ - About page uses GitHub links and GitHub Releases for version checks.
+ - DRM / activation code has been removed.
++- Shared frameless dialogs no longer rely on top-level translucency.
+ 
+ ## Recent High-Value Changes
+ 
+@@ -14,8 +15,20 @@
+ - Added robust installer support modules: `dist_meta`, `path_env`, `elevation`, `manifest`, and `registry`.
+ - Completed uninstall flow including installer self-cleanup handling.
+ - Improved task-board dragging behavior and covered it with widget tests.
++- Reworked dialog contrast coverage to test the real parented dialog context.
++- Added dialog surface tokens and dialog-scoped list styling for low-contrast themes.
++- Documented the dialog investigation in `.agents/context/qt-pitfalls.md`.
++
++## Active Work
++
++- Draft black-theme `AddGroupDialog` fix is in place: dialog translucency remains disabled, black dialog tokens are restored to standard black theme surfaces, and dialog list rows no longer use the rough blocky override from `example-2.png`.
++- Known remaining visual issue: borders around the parent card/dialog card area still read black or insufficiently distinct in the live black-theme view. Handle this in a new follow-up session.
++- A follow-up session should review the live screenshot and refine card/dialog border contrast without reintroducing top-level translucency or blocky list-item styling.
+ 
+ ## Verification Snapshot
+ 
+ - Unit and widget coverage was expanded substantially around installer behavior.
+ - Prior verification on recent work was clean for `pytest`, `ruff`, and most `ty` checks, with only previously-known type noise noted at the time.
++- Recent focused verification was clean for `tests/widget/test_transparency.py`, `test_theme_validation.py`, `test_theme_load.py`, and `test_dialogs.py`.
++- Current dialog-focused verification is clean: `uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py` and `uv run ruff check .`.
++- Full `uv run pytest` reached 99% with printed tests passing but hit the tool timeout; the remaining transparency cases were run separately and passed.
+diff --git a/.agents/context/qt-pitfalls.md b/.agents/context/qt-pitfalls.md
+new file mode 100644
+index 0000000..651f6f5
+--- /dev/null
++++ b/.agents/context/qt-pitfalls.md
+@@ -0,0 +1,51 @@
++# Qt Pitfalls
++
++## Dialog contrast investigation notes
++
++- We chased the wrong problem first.
++- The original theory was "dialog body is transparent."
++- The real user-visible failure was "dialog blends into the host so hard it reads as missing."
++
++- `widget.grab()` and child-widget pixel checks were not enough.
++- They proved a widget could paint a color offscreen.
++- They did not prove the shown dialog looked correct in the real app flow.
++
++- `WA_TranslucentBackground` on a top-level frameless dialog was the biggest trap.
++- In isolation it looked workable.
++- In the live app it distorted the shown dialog surface enough that on-screen colors did not match the widget's own painted colors.
++- This produced false confidence from offscreen tests.
++
++- The bad assumption was: if `dialogContent.grab()` looks opaque, the user sees that same surface.
++- That assumption was wrong.
++
++- Another trap: improving the dialog shell is not the same as improving the visible dialog body.
++- `AddGroupDialog` is visually dominated by its inner `QListWidget`.
++- The shell could be more distinct while the large list surface still blended into the activity editor behind it.
++
++- Theme-token checks also were not enough.
++- Distinct `dialog-*` tokens helped, but they only proved intent.
++- They did not prove the live dialog path was using those colors in a perceptible way.
++
++- The stylesheet had stale frameless-dialog assumptions baked in.
++- Transparent top-level dialog behavior made sense only for the old translucent-shell idea.
++- That was actively unhelpful once the goal became "make the actual dialog body clearly visible."
++
++- `autoFillBackground` was also a red herring.
++- Qt docs explicitly warn that stylesheet backgrounds disable the usefulness of that signal.
++- Tests should not treat it as evidence that a styled widget will render correctly.
++
++- The useful regression ended up being specific to the real flow.
++- Compare `AddGroupDialog` surfaces against the host activity editor surface.
++- Test the parented dialog context, not just a free-floating shell.
++
++- The fix direction that finally mapped to reality was:
++- remove `WA_TranslucentBackground` from shared frameless dialogs;
++- keep inner dialog surfaces explicitly stylesheet-painted;
++- style dialog-scoped list surfaces, not just the outer frame;
++- tune low-contrast themes only after the real surface path is correct.
++
++- Rule for future Qt visual bugs:
++- do not trust offscreen grabs alone;
++- do not confuse shell contrast with content contrast;
++- test the exact user-visible widget hierarchy;
++- if a frameless top-level window is involved, treat translucency as suspect until proven otherwise.
+diff --git a/.agents/plans/handoff-2026-04-21-dialog-contrast-status.md b/.agents/plans/handoff-2026-04-21-dialog-contrast-status.md
+new file mode 100644
+index 0000000..c31c64d
+--- /dev/null
++++ b/.agents/plans/handoff-2026-04-21-dialog-contrast-status.md
+@@ -0,0 +1,214 @@
++# Handoff: Dialog Contrast Fix State
++
++## Task
++
++Track the state of work related to the black-theme frameless dialog contrast issue described in:
++
++- `.agents/plans/plan-2026-04-21-black-theme-add-group-dialog-contrast.md`
++
++The user has stated that the implemented fix is not working and that the corresponding regression test is therefore still wrong or still failing to capture the real issue.
++
++The user explicitly requested a handoff only, with no further prescribed course of action.
++
++## Current status
++
++- Work on the dialog-contrast plan was started and code changes were made in the shared dialog styling and theme palette.
++- A first attempt at the regression test was too weak. It checked dialog chrome separation rather than the actual failure mode of the dialog body blending into the host page.
++- After user feedback, the test was tightened to compare `dialogContent` pixels against a plain themed host widget.
++- The tightened test passed in the current modified tree.
++- The user then reported that the fix is not actually working in practice.
++- As a result, the present state must be treated as unresolved despite the automated test pass.
++
++## Files changed during this session
++
++### Dialog contrast work
++
++- `grouper_core/colors.py`
++- `grouper/styles/_base.qss`
++- `tests/widget/test_transparency.py`
++- `tests/widget/test_theme_validation.py`
++
++### Broader test-revamp work also changed in the same session
++
++- `pyproject.toml`
++- `tests/widget/conftest.py`
++- `tests/widget/test_main_window.py`
++- `tests/widget/test_sidebar.py`
++- `tests/widget/test_theme_load.py`
++- `tests/widget/test_dialogs.py`
++
++### Files deleted in the same session
++
++- `tests/e2e/__init__.py`
++- `tests/e2e/conftest.py`
++- `tests/e2e/helpers.py`
++- `tests/e2e/test_app.py`
++
++## Files inspected and relevant locations
++
++### Plan / context
++
++- `.agents/plans/plan-2026-04-21-black-theme-add-group-dialog-contrast.md`
++- `.agents/plans/plan-2026-04-21-unit-test-revamp.md`
++
++### Dialog code path
++
++- `grouper/ui/time_tracker.py`
++- `grouper/ui/activity_config.py`
++- `grouper/ui/dialogs.py`
++  - `FramelessDialog`
++  - `AddGroupDialog`
++
++### Styling and theme data
++
++- `grouper/styles/_base.qss`
++- `grouper/styles/__init__.py`
++- `grouper_core/colors.py`
++
++### Test scaffolding and related widget coverage
++
++- `tests/widget/conftest.py`
++- `tests/widget/test_title_bar_unit.py`
++- `tests/widget/test_theme_validation.py`
++- `tests/widget/test_transparency.py`
++
++## What was changed
++
++### Shared dialog theme tokens
++
++Dedicated dialog tokens were added to each theme in `grouper_core/colors.py`:
++
++- `dialog-bg`
++- `dialog-content-bg`
++- `dialog-title-bg`
++- `dialog-border`
++
++These were populated for all shipped themes, including explicit values for `black`.
++
++### Shared dialog QSS
++
++`grouper/styles/_base.qss` was changed so that:
++
++- `#dialogFrame` uses `{{dialog-bg}}` and `{{dialog-border}}`
++- `#dialogContent` uses `{{dialog-content-bg}}`
++- `#dialogTitleBar` uses `{{dialog-title-bg}}`
++
++This removed the previous direct reuse of page `bg-primary` for the dialog shell.
++
++### Regression coverage
++
++`tests/widget/test_transparency.py` was expanded to include:
++
++- palette-level checks for dialog-surface separation
++- pixel-level opacity checks for dialog content and frame
++- a stricter body-vs-page comparison for representative themes
++
++The important change from the first failed attempt was that the body test now samples:
++
++- a pixel from `dialogContent`
++- a pixel from the center of a plain themed host widget
++
++and compares those values directly.
++
++### Theme validation
++
++`tests/widget/test_theme_validation.py` was extended so each theme must provide the dialog tokens and all QSS placeholders must resolve.
++
++## Important correction made during the session
++
++An earlier statement during the session referred to the broader unit-test-revamp plan when the user was specifically asking about the black-theme dialog-contrast plan. That was incorrect context handling.
++
++The relevant plan for the user complaint was the dialog-contrast plan, not the larger revamp plan.
++
++## Verification that was actually run
++
++### Focused transparency / theme runs
++
++The following focused tests were run against the modified tree:
++
++```bash
++uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py -v
++```
++
++Result after tightening the regression and adjusting light-theme dialog values:
++
++- `59 passed`
++
++The following narrower run was also completed:
++
++```bash
++uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py -q
++```
++
++Result:
++
++- `32 passed`
++
++### Intermediate failure observed during development
++
++While tightening the body-vs-page test, the `light` theme initially failed because the new dialog content color was still too close to the page background.
++
++Observed failure:
++
++- `light: dialog body is visually indistinguishable from the page`
++
++That was then adjusted in `grouper_core/colors.py` by making the light dialog content/title surfaces more distinct.
++
++## Important unresolved issue
++
++The user reported after these changes that:
++
++- the fix is not actually working
++- the test implication is therefore not trustworthy enough
++
++This means the automated pass should not be treated as evidence that the visual bug is truly resolved in the real application flow.
++
++At the end of this session, the state is:
++
++- automated focused tests pass in the modified tree
++- user indicates the real bug remains
++- the task is unresolved
++
++## Relevant assumptions and risks already surfaced
++
++- Offscreen `grab()`-based rendering can miss native/composited behavior differences.
++- A pixel comparison inside an isolated shown widget may still not match the exact user-visible composition of:
++  - time tracker
++  - activity editor panel
++  - modal dialog over that panel
++- The issue may still involve a gap between the test fixture setup and the real `AddGroupDialog` presentation context.
++- The earlier hypothesis in the plan remains relevant: the issue is likely not literal alpha transparency of the inner dialog body, but a real-world visual contrast failure in context.
++- The shared `WA_TranslucentBackground` behavior in `FramelessDialog` was not changed in this session.
++
++## Commands run during the session
++
++```bash
++git branch --show-current
++git status --short
++uv run pytest tests/ --co -q
++uv run pytest tests/widget/test_main_window.py tests/widget/test_sidebar.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py tests/widget/test_transparency.py tests/widget/test_theme_validation.py -v
++uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py -v
++uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py -q
++uv run ruff check tests/widget/test_transparency.py tests/widget/test_theme_validation.py grouper_core/colors.py
++uv run ruff check tests/widget/test_transparency.py tests/widget/test_theme_validation.py --fix
++uv run ruff check tests/widget/test_dialogs.py tests/widget/test_main_window.py tests/widget/test_sidebar.py tests/widget/test_theme_load.py --fix
++```
++
++## Worktree notes
++
++Observed before and during the work:
++
++- current branch: `fix/dialogs`
++- pre-existing modifications not created by this session:
++  - `uv.lock` modified
++  - plan files in `.agents/plans/` untracked
++
++These were not reverted or otherwise changed except for adding this handoff note and working with the referenced plan files already in the workspace.
++
++## Final state at handoff
++
++- Shared dialog theming has been changed to use explicit dialog surface tokens.
++- The transparency/contrast regression test was rewritten to target dialog body vs page body instead of relying on chrome contrast.
++- Focused automated tests pass.
++- The user reports the practical fix still does not work.
++- No further course of action is prescribed in this note, per user instruction.
+diff --git a/.agents/plans/handoff-2026-04-23-black-dialog-border-contrast.md b/.agents/plans/handoff-2026-04-23-black-dialog-border-contrast.md
+new file mode 100644
+index 0000000..cbda88e
+--- /dev/null
++++ b/.agents/plans/handoff-2026-04-23-black-dialog-border-contrast.md
+@@ -0,0 +1,68 @@
++# Handoff: Black Theme Dialog Border Contrast
++
++## Goal
++
++Finish the black-theme `AddGroupDialog` visual fix. The draft fix restores standard black dialog theming and removes the bad blocky list rows from `example-2.png`, but the live view still has a remaining issue: borders around the parent card/dialog card area can read black or insufficiently distinct.
++
++## Current Status
++
++- Branch: `fix/dialogs`
++- Latest relevant commit: `558f9e2 fix dialog surface theming`
++- Draft fix is committed.
++- Top-level frameless dialog translucency remains disabled; do not reintroduce `WA_TranslucentBackground` for these dialogs.
++- Black dialog tokens now intentionally map to standard black theme surfaces:
++  - `dialog-bg`: `#0a0a0a`
++  - `dialog-content-bg`: `#0a0a0a`
++  - `dialog-title-bg`: `#141414`
++  - `dialog-border`: `#2a2a2a`
++- Dialog list rows no longer use the solid oversized `dialog-bg` item override that caused the rough `example-2.png` look.
++- Dialog-scoped selectors now protect parented dialogs from `#card QWidget { background-color: transparent; }` bleed-through.
++
++## Files Changed
++
++- `.agents/context/STATUS.md`: records draft fix and remaining border issue.
++- `.agents/context/NOTES.md`: records black-theme dialog decisions and parent-card selector pitfall.
++- `.agents/context/MAP.md`: adds theme validation test location.
++- `grouper/ui/dialogs.py`: frameless dialogs no longer use top-level translucency; key internal surfaces use `WA_StyledBackground`.
++- `grouper/styles/_base.qss`: dialog token usage, standard list surface rules inside dialogs, and parent-card dialog specificity overrides.
++- `grouper_core/colors.py`: adds `dialog-*` tokens for all themes, with black restored to standard black surfaces.
++- `tests/widget/test_dialogs.py`: frameless dialog construction and translucency regression coverage.
++- `tests/widget/test_theme_load.py`: QSS/theme loading coverage.
++- `tests/widget/test_theme_validation.py`: dialog token coverage and unresolved-token checks.
++- `tests/widget/test_transparency.py`: live screen-sampled dialog opacity/contrast regressions including parented `AddGroupDialog` checks.
++- `tests/widget/conftest.py`: adds `main_window` fixture needed by theme-load tests.
++
++## Remaining Issue
++
++The black-theme dialog is no longer using the bad `example-2.png` row styling, but the live screenshot still needs border refinement. Specifically, the parent card/dialog card perimeter can appear black or too low contrast against surrounding black-theme surfaces.
++
++This should be addressed as a separate visual pass. Avoid solving it by making the whole dialog gray or by bringing back solid block list rows.
++
++## Important Decisions
++
++- Standard black theme surfaces are required for `AddGroupDialog`; do not make black dialog body/list rows visibly gray just to pass contrast checks.
++- The correct regression target is the live parented dialog hierarchy, not only `widget.grab()` snapshots.
++- `#card QWidget { background-color: transparent; }` can override dialog descendants when dialogs are parented inside activity editor cards. Use sufficiently specific dialog selectors when needed.
++- Top-level dialog translucency produced misleading offscreen results and should remain disabled.
++
++## Immediate Next Steps
++
++1. Open the app in black theme and reproduce `AddGroupDialog` from the activity editor.
++2. Compare the current live result against `example-2.png` and any newer screenshot (`example-3.png` is present but uncommitted).
++3. Focus only on the card/dialog border area that still reads black or insufficiently distinct.
++4. Prefer a minimal QSS/token adjustment to `dialog-border`, parent-card border specificity, or targeted dialog frame/card selectors.
++5. Do not alter the standard black dialog body/list surfaces unless the user explicitly changes the requirement.
++6. Add or adjust a focused widget test only if it can reliably sample the affected border area in the exact parented dialog flow.
++
++## Verification To Run
++
++```bash
++uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py
++uv run ruff check .
++```
++
++Full `uv run pytest` was attempted and reached 99% with all printed tests passing but hit tool timeout; the final transparency cases were run separately and passed.
++
++## Worktree Notes
++
++After commit `558f9e2`, unrelated pre-existing worktree changes remain unstaged/untracked, including e2e test removals, `pyproject.toml`, `uv.lock`, some `.agents/plans/*`, screenshots, and unrelated widget tests. Do not revert or include those unless the next task explicitly calls for them.
+diff --git a/.agents/plans/plan-2026-04-21-black-theme-add-group-dialog-contrast.md b/.agents/plans/plan-2026-04-21-black-theme-add-group-dialog-contrast.md
+new file mode 100644
+index 0000000..ad23b4b
+--- /dev/null
++++ b/.agents/plans/plan-2026-04-21-black-theme-add-group-dialog-contrast.md
+@@ -0,0 +1,178 @@
++# Fix plan: Black-theme Add Group dialog appears transparent
++
++## Goal
++
++Fix the time tracker "Edit Activities" -> "+ Add Group" dialog so it is clearly visible on the `black` theme, confirm that the fix is safe for other themes, and add regression coverage.
++
++## Current understanding
++
++### User-visible bug
++
++- In the time tracker, opening `Edit Activities`, selecting an activity, and clicking `+ Add Group` opens `AddGroupDialog`.
++- On the `black` theme the dialog appears transparent / visually disappears into the underlying editor.
++
++### Confirmed code path
++
++- `grouper/ui/time_tracker.py`
++  - `TimeTrackerView._edit_activities()` opens the full-width `ActivityConfigPanel`.
++- `grouper/ui/activity_config.py`
++  - `_ActivityDetailEditor._add_group()` constructs `AddGroupDialog(all_groups, self._activity.groups, self)` and runs `dlg.exec()`.
++- `grouper/ui/dialogs.py`
++  - `AddGroupDialog` inherits `FramelessDialog`.
++  - `FramelessDialog` always sets:
++    - `Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog`
++    - `Qt.WidgetAttribute.WA_TranslucentBackground`
++  - The dialog shell is a `QFrame` named `dialogFrame` with child `dialogContent`.
++- `grouper/styles/_base.qss`
++  - Global `QWidget` background uses `{{bg-primary}}`.
++  - `#dialogFrame` background also uses `{{bg-primary}}`.
++  - `#dialogContent` background also uses `{{bg-primary}}`.
++  - `#dialogTitleBar` uses `{{bg-secondary}}`.
++- `grouper_core/colors.py`
++  - `black` theme uses very compressed shell colors:
++    - `bg-primary = #0a0a0a`
++    - `bg-secondary = #141414`
++    - `border = #2a2a2a`
++
++### Cause confirmed from investigation
++
++- This is not true alpha transparency inside the dialog widget itself.
++  - Offscreen `dlg.grab()` renders opaque pixels (`alpha=255`) for `dark`, `light`, `black`, and the other shipped themes.
++  - Native screen capture also showed opaque black-theme dialog pixels.
++- The bug is a visual contrast failure in the shared frameless dialog treatment:
++  - the page background and dialog content both use `bg-primary`, so the dialog body has no surface separation from the parent UI;
++  - the only remaining delineation is the title bar and thin border;
++  - the `black` palette makes `bg-primary`, `bg-secondary`, and `border` too similar, so the shell reads as transparent against the activity editor.
++- `WA_TranslucentBackground` is part of the shared dialog base and may make this class of issue more noticeable, but the direct root cause in the current code is that the dialog surface is styled with the same base color token as the page behind it.
++
++### Other-theme assessment
++
++- The structural issue exists in all themes because `QWidget`, `#dialogFrame`, and `#dialogContent` all resolve to the same `bg-primary` token.
++- The problem is most visible on `black` because that palette has the weakest dialog-shell separation.
++- `oxygen` is the closest secondary-risk theme because its shell contrast is also low.
++- `dark`, `light`, `sage`, `sodium`, `argon`, and `cathode` still render opaque and are more visually distinguishable, so they are not currently presenting the same user-visible severity.
++
++## Constraints
++
++- Keep the fix minimal and centralized. `AddGroupDialog` should not get a one-off styling hack if the real issue is in the shared dialog shell.
++- Do not regress other dialogs that inherit `FramelessDialog` (`CreateActivityDialog`, `CreateProjectDialog`, `StopSessionDialog`, `ConfirmDialog`, etc.).
++- Preserve the existing frameless-dialog interaction model unless verification shows a compositor issue that requires deeper changes.
++- Keep theme behavior explicit in palette/QSS rather than ad hoc per-dialog `setStyleSheet()` calls.
++
++## Intended approach
++
++Make the shared frameless dialog shell visually distinct from ordinary page widgets, with theme-controlled dialog surface tokens rather than reusing the app-wide `bg-primary` page background. Then add widget-level rendering regression tests that would fail if the dialog body again collapses into the host page on low-contrast themes.
++
++## Implementation steps
++
++### Phase 1: Add regression coverage first
++
++1. Create a new widget test file, preferably `tests/widget/test_dialog_rendering.py`.
++2. Add a helper that:
++   - ensures a `QApplication` exists via the existing widget-test fixture;
++   - calls `grouper.styles.load_theme(app, theme_name)`;
++   - creates a plain host `QWidget` using the app stylesheet;
++   - creates and shows `AddGroupDialog` on top of that host;
++   - processes events and captures rendered pixels with `dlg.grab().toImage()`.
++3. Add a regression test for `black` that proves the dialog shell is visually distinct from the host page.
++   - Sample a pixel from the dialog content area.
++   - Sample a pixel from a plain host widget area rendered with the same theme.
++   - Assert the two colors are not equal after the fix.
++   - Keep the sample points away from borders/text so the test is stable.
++4. Add a broader safety test over representative themes, at minimum `dark`, `light`, `black`, and `oxygen`.
++   - Assert dialog content pixels are opaque.
++   - Assert the dialog shell remains visually distinct from the page background in every covered theme.
++5. If the rendering test is flaky, fall back to asserting the effective palette/style outcome at the `dialogFrame`/`dialogContent` widgets, but prefer pixel-based coverage because this bug is visual.
++
++Verification for Phase 1:
++
++- Run `uv run pytest tests/widget/test_dialog_rendering.py` and confirm the new black-theme regression fails before the styling fix, then passes after it.
++
++### Phase 2: Introduce dialog-specific theme tokens
++
++1. Update `grouper_core/colors.py` to add dedicated dialog surface tokens for every theme.
++   - Add tokens such as:
++     - `dialog-bg`
++     - `dialog-content-bg`
++     - `dialog-title-bg`
++     - `dialog-border`
++   - Use explicit values for each theme rather than aliasing implicitly in QSS.
++2. Choose values so dialogs read as elevated surfaces.
++   - For `black`, make the dialog body materially lighter than `bg-primary` while staying consistent with the palette.
++   - Make `dialog-border` stronger than the current page border if needed.
++   - Keep title-bar contrast consistent with the body.
++3. Audit all themes so the new dialog tokens are sensible and do not over-brighten light themes or crush dark themes.
++
++Verification for Phase 2:
++
++- Run `uv run pytest tests/widget/test_theme_validation.py`.
++- If that file does not validate the new tokens, extend it or add a nearby test that asserts every theme provides the full dialog token set.
++
++### Phase 3: Re-style the shared frameless dialog shell
++
++1. Update `grouper/styles/_base.qss` so dialog shell widgets use the new dialog tokens.
++   - Change `#dialogFrame` to use `{{dialog-bg}}` and `{{dialog-border}}`.
++   - Change `#dialogContent` to use `{{dialog-content-bg}}`.
++   - Change `#dialogTitleBar` to use `{{dialog-title-bg}}`.
++2. Keep the styling change shared and centralized.
++   - Do not special-case `AddGroupDialog` unless a follow-up issue is discovered.
++3. Re-check whether the current border radius, border width, and shadow are enough once the dialog body is no longer identical to the page.
++   - If still too subtle on `black`, strengthen the border or increase shadow contrast in QSS or in `FramelessDialog`'s `QGraphicsDropShadowEffect`.
++4. Avoid introducing theme-specific `setStyleSheet()` calls in `grouper/ui/dialogs.py`.
++
++Verification for Phase 3:
++
++- Re-run `uv run pytest tests/widget/test_dialog_rendering.py`.
++- Manually launch the app and verify the exact user flow on `black`:
++  1. `uv run grouper`
++  2. switch to `Black` theme
++  3. open `Time Tracker`
++  4. click `Edit Activities`
++  5. select an activity
++  6. click `+ Add Group`
++  7. confirm the dialog reads as a distinct, opaque modal surface
++
++### Phase 4: Validate other frameless dialogs and theme safety
++
++1. Manually spot-check at least these dialogs because they share `FramelessDialog`:
++   - `CreateActivityDialog`
++   - `StopSessionDialog`
++   - `ConfirmDialog`
++2. Verify the same dialogs on at least these themes:
++   - `black`
++   - `dark`
++   - `light`
++   - `oxygen`
++3. Confirm there is no regression in input readability, border visibility, or title-bar contrast.
++
++Verification for Phase 4:
++
++- Run the most relevant widget suite after the styling change:
++  - `uv run pytest tests/widget`
++
++### Phase 5: Final quality checks and project context updates
++
++1. Run repository checks required for modified files:
++   - `uv run ruff check .`
++   - `uv run ty check`
++2. If any unrelated lint/type issue is surfaced by the touched files or test additions, fix it before considering the work complete.
++3. Update project context docs after the fix is verified:
++   - `A:\nudev\grouper\.agents\context\STATUS.md`
++   - `A:\nudev\grouper\.agents\context\NOTES.md`
++   - record the dialog-contrast fix and the new test coverage.
++
++## Risks and decisions
++
++- Risk: changing shared dialog tokens affects every frameless dialog.
++  - Mitigation: keep the change surface-specific, verify the shared dialogs listed above, and add rendering tests.
++- Risk: if the real issue later proves to be a Windows layered-window compositor quirk, color-only changes may improve perception without eliminating the underlying platform fragility.
++  - Mitigation: after the shared styling fix, manually confirm native behavior on Windows before closing the issue. Only if a transparency artifact remains should a second pass evaluate `WA_TranslucentBackground` / shadow implementation in `FramelessDialog`.
++- Decision: do not patch only `AddGroupDialog`.
++  - Reason: the bug is produced by the shared `FramelessDialog` + global dialog QSS treatment.
++
++## Expected end state
++
++- The `+ Add Group` dialog in the time tracker activity editor is clearly visible on the `black` theme.
++- The dialog is still opaque and visually correct on representative other themes.
++- Shared frameless dialogs have explicit elevated-surface styling instead of blending into page backgrounds.
++- Widget regression coverage protects against this exact visual failure recurring.
+diff --git a/.agents/plans/plan-2026-04-21-unit-test-revamp.md b/.agents/plans/plan-2026-04-21-unit-test-revamp.md
+new file mode 100644
+index 0000000..fda3582
+--- /dev/null
++++ b/.agents/plans/plan-2026-04-21-unit-test-revamp.md
+@@ -0,0 +1,469 @@
++# Plan: Unit Test Revamp — Replace E2E Suite + Add Visual Regression Coverage
++
++**Branch:** `feat/test-revamp`
++**Date:** 2026-04-21
++
++## Goal
++
++1. Remove the broken pywinauto-based e2e test suite (`tests/e2e/`).
++2. Replace its coverage with solid widget-level and unit tests that don't require subprocess launching, UI automation, or external dependencies (pywinauto, mss, psutil).
++3. Add a transparent-background detection framework — systematic widget-level tests that catch unintended transparency / invisible-surface regressions across all themes.
++4. Address broader deficiencies in the existing unit/widget test suites where they impact coverage gaps left by removing e2e tests.
++
++---
++
++## Current State
++
++### E2E test suite (to be removed)
++
++`tests/e2e/` contains 4 files:
++- `__init__.py` (empty)
++- `conftest.py` — launches app subprocess, connects pywinauto, screenshot capture
++- `helpers.py` — pywinauto navigation/finder/database-seeding utilities
++- `test_app.py` — 5 tests: `test_app_launches_and_renders`, `test_sidebar_navigation_all_views`, `test_title_bar_controls`, `test_theme_switch_survives`, `test_session_lifecycle`
++
++Dependencies: `pywinauto`, `mss`, `psutil` — heavyweight, Windows-only, timing-sensitive, brittle.
++
++### What the e2e tests cover and where replacement tests must go
++
++| E2E Test | Coverage | Replacement Location |
++|---|---|---|
++| `test_app_launches_and_renders` | MainWindow construction, title, visibility, dashboard heading | New `tests/widget/test_main_window.py` |
++| `test_sidebar_navigation_all_views` | Sidebar button → view mapping | New `tests/widget/test_sidebar.py` |
++| `test_title_bar_controls` | Min/max/close buttons, maximize toggle | Already extensively covered in `tests/widget/test_title_bar_unit.py` (22+ tests) |
++| `test_theme_switch_survives` | Theme loading, navigation after theme switch | New `tests/widget/test_theme_load.py` |
++| `test_session_lifecycle` | Start/pause/resume/stop session flow | Already extensively covered in `tests/unit/db/test_integration.py` (13 tests) and `tests/cli/test_e2e.py` (46 tests) |
++
++### Key source files for transparent-background testing
++
++- `grouper/ui/dialogs.py` — `FramelessDialog` base class:
++  - Sets `WA_TranslucentBackground` on the QDialog (line 75)
++  - Inner `QFrame` with `objectName("dialogFrame")`, `setAutoFillBackground(True)`
++  - Inner content `QWidget` with `objectName("dialogContent")`
++  - `QGraphicsDropShadowEffect` for shadow
++  - 10 dialog subclasses inherit from it
++
++- `grouper/styles/_base.qss`:
++  - `#dialogFrame`: `background-color: {{bg-primary}}`, `border: 1px solid {{border}}`
++  - `#dialogContent`: `background-color: {{bg-primary}}`
++  - `#dialogTitleBar`: `background-color: {{bg-secondary}}`
++  - `QDialog`: `background-color: {{bg-primary}}`
++
++- `grouper_core/colors.py` — 8 themes in `_THEME_PALETTE`, each with ~100 tokens
++
++- `grouper/styles/__init__.py` — `load_theme(app, theme)` renders QSS template and applies stylesheet
++
++### Existing test coverage gaps
++
++1. **Theme validation** (`tests/widget/test_theme_validation.py`): Only checks `danger`/`success` hex validity and that they differ. Does NOT check:
++   - All required tokens exist in every theme
++   - Critical background tokens (`bg-primary`, `bg-secondary`, `border`) are present and valid
++   - QSS template references match available palette tokens
++   - Dialog surface tokens if/when they are added per the contrast-fix plan
++
++2. **Theme loading** (`load_theme`): No tests for the template rendering pipeline.
++
++3. **Dialog construction**: No widget tests for `FramelessDialog` or any of its 10 subclasses.
++
++4. **Transparent-background detection**: Zero coverage. No mechanism to detect when widgets render as invisible or when surfaces blend into the background.
++
++5. **MainWindow construction**: Only tested indirectly via title-bar tests. No direct construction/view-mapping tests.
++
++6. **Sidebar**: No widget tests for navigation button → view index mapping.
++
++---
++
++## Implementation Steps
++
++### Phase 1: Remove e2e test suite
++
++**Step 1.1** — Delete the e2e test directory
++
++- Delete: `tests/e2e/__init__.py`
++- Delete: `tests/e2e/conftest.py`
++- Delete: `tests/e2e/helpers.py`
++- Delete: `tests/e2e/test_app.py`
++- Delete: `tests/e2e/` directory
++
++**Step 1.2** — Clean up pytest configuration
++
++- In `pyproject.toml` `[tool.pytest.ini_options]`:
++  - Remove `"e2e: end-to-end tests launching the full app subprocess"` from `markers` (the `e2e` marker is no longer used)
++  - Keep `widget` and `slow` markers
++
++**Verification:**
++- `uv run pytest tests/ --co -q` lists no e2e tests
++- `uv run pytest tests/ -v --ignore=tests/e2e` passes (same as before minus e2e)
++
++---
++
++### Phase 2: Add transparent-background detection framework
++
++This is the core new testing infrastructure. It provides reusable helpers that any widget test can use to verify opacity and visual distinction.
++
++**Step 2.1** — Create `tests/widget/test_transparency.py`
++
++This file provides the core transparency-detection test infrastructure.
++
++**Test approach — two-tier detection:**
++
++**Tier 1: Palette-level contrast checks (pure Python, no Qt rendering required)**
++For each theme, verify that dialog-critical color tokens produce sufficient visual separation from the page background. This catches the root cause (same color used for page and dialog) before any rendering happens.
++
++```python
++class TestPaletteContrastForDialogs:
++    """Verify dialog surfaces are visually distinct from page background in every theme."""
++
++    def test_dialog_frame_differs_from_page_bg(self):
++        """#dialogFrame uses bg-primary but must be distinguishable from the page
++        behind it. The dialog's actual visual distinction comes from the combination
++        of bg-primary on dialogFrame + bg-secondary on titleBar + border.
++        Verify that at least one of these differs from bg-primary by a meaningful amount."""
++        # For each theme, compute perceptual contrast between bg-primary and:
++        #   (a) bg-secondary (title bar)
++        #   (b) border
++        # Assert at least one exceeds a minimum luminance delta.
++
++    def test_all_themes_have_dialog_critical_tokens(self):
++        """Every theme must define bg-primary, bg-secondary, border, text, text-muted."""
++
++    def test_no_theme_has_identical_bg_primary_and_bg_secondary(self):
++        """bg-primary and bg-secondary must differ — they define surface separation."""
++
++    def test_border_differs_from_bg_primary(self):
++        """border must be distinguishable from bg-primary."""
++```
++
++Helper function to add (module-level or in conftest):
++```python
++def _hex_to_rgb(hex_str: str) -> tuple[int, int, int]:
++    """Convert '#rrggbb' to (r, g, b)."""
++
++def _relative_luminance(hex_str: str) -> float:
++    """Compute relative luminance per WCAG 2.0."""
++
++def _contrast_ratio(c1: str, c2: str) -> float:
++    """WCAG 2.0 contrast ratio between two hex colors."""
++
++def _perceptual_delta(c1: str, c2: str) -> float:
++    """Simple Euclidean RGB distance, normalized to 0-1 range."""
++```
++
++**Tier 2: Pixel-level opacity checks (Qt rendering, requires QApplication)**
++Render widgets offscreen and verify that their rendered surfaces are fully opaque where expected.
++
++```python
++class TestFramelessDialogOpacity:
++    """Verify FramelessDialog renders opaque pixels in its content area."""
++
++    @pytest.mark.parametrize("theme", available_themes())
++    def test_dialog_content_is_opaque(self, qapp, theme):
++        """Grab a pixel from the dialog content area and verify alpha == 255."""
++        # 1. load_theme(qapp, theme)
++        # 2. Create a FramelessDialog subclass (e.g. ConfirmDialog or a minimal test dialog)
++        # 3. Show it (required for grab() to work)
++        # 4. dlg.grab().toImage()
++        # 5. Sample a pixel from the center of dialogContent
++        # 6. Assert pixel.alpha() == 255
++
++    @pytest.mark.parametrize("theme", available_themes())
++    def test_dialog_frame_is_opaque(self, qapp, theme):
++        """Grab a pixel from the dialog frame area and verify alpha == 255."""
++        # Similar approach, sampling from dialogFrame region
++
++    @pytest.mark.parametrize("theme", ["black", "dark", "light", "oxygen"])
++    def test_dialog_body_differs_from_plain_page(self, qapp, theme):
++        """The dialog body color must be perceptually distinguishable from
++        a plain QWidget rendered with the same theme.
++        This catches the 'transparent-looking dialog' bug where dialog and page
++        share the same bg-primary."""
++        # 1. load_theme(qapp, theme)
++        # 2. Create a plain QWidget, show it, grab pixel from center
++        # 3. Create a FramelessDialog, show it, grab pixel from dialogContent center
++        # 4. Assert the colors are NOT identical, OR assert that the combined
++        #    dialog chrome (title bar + border + frame) provides sufficient visual contrast
++```
++
++**Helper for dialog testing:**
++```python
++@pytest.fixture
++def themed_dialog(qapp):
++    """Create a minimal FramelessDialog with the given theme applied."""
++    def _make(theme: str = "dark"):
++        from grouper.styles import load_theme
++        from grouper.ui.dialogs import ConfirmDialog
++        load_theme(qapp, theme)
++        dlg = ConfirmDialog("Test", "Body text", None)
++        dlg.move(100, 100)
++        dlg.resize(400, 300)
++        dlg.show()
++        qapp.processEvents()
++        return dlg
++    return _make
++```
++
++**Pixel sampling approach:**
++```python
++def _sample_pixel(image, x: int, y: int) -> QColor:
++    """Sample a pixel from a QImage at the given coordinates."""
++    from PySide6.QtGui import QColor
++    return QColor(image.pixel(x, y))
++
++def _find_dialog_content_center(dialog) -> tuple[int, int]:
++    """Find the center of the dialogContent widget in dialog coordinates."""
++    content = dialog.findChild(QWidget, "dialogContent")
++    if content is None:
++        pytest.skip("dialogContent not found")
++    geo = content.geometry()
++    return (geo.x() + geo.width() // 2, geo.y() + geo.height() // 2)
++```
++
++**Verification:**
++- `uv run pytest tests/widget/test_transparency.py -v` — all tests pass
++- Manually verify: change `bg-primary` and `bg-secondary` to the same value in the `black` theme in `grouper_core/colors.py`, re-run, see `test_dialog_body_differs_from_plain_page` fail for `black`
++
++---
++
++### Phase 3: Add missing widget/unit tests for e2e coverage gaps
++
++**Step 3.1** — Create `tests/widget/test_main_window.py`
++
++Covers: MainWindow construction, title, central widget layout, view stack existence.
++
++```python
++class TestMainWindowConstruction:
++    """Replace e2e test_app_launches_and_renders with widget-level tests."""
++
++    def test_window_title_contains_grouper(self, main_window):
++        """Window title includes 'Grouper'."""
++        # Use the existing main_window fixture pattern from test_title_bar_unit.py
++
++    def test_central_widget_exists(self, main_window):
++        """MainWindow has a central widget (_BorderedCentral)."""
++
++    def test_stack_widget_exists(self, main_window):
++        """MainWindow contains the animated stack for views."""
++
++    def test_sidebar_exists(self, main_window):
++        """MainWindow contains the sidebar navigation."""
++
++    def test_title_bar_exists(self, main_window):
++        """MainWindow contains the custom title bar."""
++
++    def test_stack_has_expected_view_count(self, main_window):
++        """The view stack should contain one widget per registered view."""
++```
++
++Reuse the `main_window` fixture pattern from `tests/widget/test_title_bar_unit.py` (mock config/theme, construct MainWindow).
++
++**Step 3.2** — Create `tests/widget/test_sidebar.py`
++
++Covers: Sidebar button → view index mapping.
++
++```python
++class TestSidebarNavigation:
++    """Replace e2e test_sidebar_navigation_all_views."""
++
++    def test_sidebar_has_all_view_buttons(self, main_window):
++        """Sidebar has a button for every registered view."""
++
++    def test_view_names_match_stack_indices(self, main_window):
++        """Each sidebar button maps to the correct stack index."""
++
++    def test_clicking_sidebar_button_switches_stack(self, main_window, qapp):
++        """Clicking a sidebar button changes the current stack index."""
++```
++
++**Step 3.3** — Create `tests/widget/test_theme_load.py`
++
++Covers: load_theme pipeline, theme switching, stylesheet application.
++
++```python
++class TestLoadTheme:
++    """Replace e2e test_theme_switch_survives with unit-level tests."""
++
++    def test_load_theme_produces_nonempty_stylesheet(self, qapp):
++        """load_theme returns a non-empty stylesheet string."""
++        # Actually call load_theme and verify qapp.setStyleSheet was called with non-empty string
++
++    def test_load_theme_replaces_all_tokens(self, qapp):
++        """No unresolved {{token}} placeholders remain in the rendered QSS."""
++        # Load theme, get stylesheet, assert no '{{' remaining
++
++    @pytest.mark.parametrize("theme", available_themes())
++    def test_every_theme_loads_without_error(self, qapp, theme):
++        """load_theme does not raise for any registered theme."""
++
++    def test_theme_switch_changes_stylesheet(self, qapp):
++        """Switching from dark to light produces a different stylesheet."""
++
++    def test_theme_switch_preserves_window_visibility(self, main_window, qapp):
++        """After switching themes, the main window remains visible and functional."""
++```
++
++**Step 3.4** — Create `tests/widget/test_dialogs.py`
++
++Covers: FramelessDialog and subclass construction, layout, styling attributes.
++
++```python
++class TestFramelessDialog:
++    """Test FramelessDialog base class construction and attributes."""
++
++    def test_has_translucent_background_attribute(self, qapp):
++        """FramelessDialog sets WA_TranslucentBackground."""
++        # Create a FramelessDialog, check testAttribute(WA_TranslucentBackground)
++
++    def test_has_frameless_window_hint(self, qapp):
++        """FramelessDialog uses FramelessWindowHint."""
++
++    def test_dialog_frame_has_auto_fill_background(self, qapp):
++        """The inner dialogFrame sets autoFillBackground=True."""
++
++    def test_dialog_frame_object_name(self, qapp):
++        """Inner QFrame has objectName 'dialogFrame'."""
++
++    def test_dialog_content_object_name(self, qapp):
++        """Inner content widget has objectName 'dialogContent'."""
++
++    def test_dialog_has_drop_shadow(self, qapp):
++        """Dialog container has a QGraphicsDropShadowEffect."""
++
++class TestDialogSubclasses:
++    """Verify all FramelessDialog subclasses construct without error."""
++
++    @pytest.mark.parametrize("dialog_class", [
++        "CreateActivityDialog",
++        "CreateProjectDialog",
++        "EditProjectDialog",
++        "EditBoardDialog",
++        "AddBoardDialog",
++        "CreateTaskDialog",
++        "StopSessionDialog",
++        "ConfirmDialog",
++        "AddGroupDialog",
++    ])
++    def test_dialog_constructs(self, qapp, dialog_class):
++        """Each dialog subclass can be constructed without errors."""
++        # For dialogs that require arguments, provide minimal mocks
++```
++
++**Verification:**
++- `uv run pytest tests/widget/test_main_window.py tests/widget/test_sidebar.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py -v` — all pass
++
++---
++
++### Phase 4: Strengthen existing theme validation
++
++**Step 4.1** — Extend `tests/widget/test_theme_validation.py`
++
++Add these tests to the existing file:
++
++```python
++class TestThemeTokenCompleteness:
++    """Verify every theme has all required color tokens."""
++
++    REQUIRED_TOKENS = [
++        "bg-primary", "bg-secondary", "bg-tertiary", "bg-sidebar",
++        "border", "text", "text-muted",
++        "accent", "accent-hover", "accent-active",
++        "danger", "success", "warning",
++        # Dialog-critical tokens (when added, extend this list)
++        # "dialog-bg", "dialog-content-bg", "dialog-title-bg", "dialog-border",
++    ]
++
++    def test_all_themes_have_required_tokens(self):
++        """Every theme in _THEME_PALETTE defines all REQUIRED_TOKENS."""
++
++    def test_all_token_values_are_valid_hex(self):
++        """Every token value in every theme matches #[0-9a-fA-F]{6}."""
++
++    def test_no_duplicate_tokens_within_theme(self):
++        """Token keys are unique within each theme (sanity check)."""
++
++class TestQssTemplateTokenCoverage:
++    """Verify QSS template tokens match available palette tokens."""
++
++    def test_all_qss_tokens_have_palette_values(self):
++        """Every {{token}} in _base.qss has a corresponding entry in every theme palette."""
++
++    def test_no_unresolved_tokens_after_render(self):
++        """Rendering the QSS with any theme leaves no {{token}} placeholders."""
++```
++
++**Verification:**
++- `uv run pytest tests/widget/test_theme_validation.py -v` — all pass
++
++---
++
++### Phase 5: Final quality checks
++
++**Step 5.1** — Run full test suite
++```bash
++uv run pytest tests/ -v --ignore=tests/e2e
++```
++
++**Step 5.2** — Run linting and type checking
++```bash
++uv run ruff check .
++uv run ty check
++```
++
++**Step 5.3** — Update project context
++- Update `.agents/context/STATUS.md` — note e2e removal and new test coverage
++- Update `.agents/context/NOTES.md` — update quick commands if needed
++
++---
++
++## File Change Summary
++
++### Delete
++- `tests/e2e/__init__.py`
++- `tests/e2e/conftest.py`
++- `tests/e2e/helpers.py`
++- `tests/e2e/test_app.py`
++
++### Create
++- `tests/widget/test_transparency.py` — transparent-background detection framework
++- `tests/widget/test_main_window.py` — MainWindow construction tests
++- `tests/widget/test_sidebar.py` — sidebar navigation tests
++- `tests/widget/test_theme_load.py` — theme loading pipeline tests
++- `tests/widget/test_dialogs.py` — FramelessDialog construction and subclass tests
++
++### Modify
++- `pyproject.toml` — remove `e2e` marker from pytest config
++- `tests/widget/test_theme_validation.py` — add token completeness and QSS coverage tests
++
++---
++
++## Risks and Decisions
++
++### Risk: Offscreen rendering may behave differently across platforms
++- **Mitigation:** Pixel-level tests sample relative positions (centers, not absolute coords). Use `qapp.processEvents()` and `show()` to ensure layout is computed. If CI runs headless, use `QT_QPA_PLATFORM=offscreen`.
++
++### Risk: `grab()` may produce all-transparent on some backends
++- **Mitigation:** The palette-level contrast checks (Tier 1) don't depend on rendering at all. If pixel tests are flaky, the palette tests still catch the root cause. Mark pixel tests with `@pytest.mark.widget` so they can be filtered.
++
++### Risk: Some dialog subclasses require complex argument setup
++- **Mitigation:** Use minimal mocks for required arguments (activity lists, task objects, etc.). Test construction only, not full interaction flow.
++
++### Decision: Two-tier transparency detection
++- **Tier 1 (palette-level):** Fast, deterministic, no Qt rendering. Catches the root cause (color collision).
++- **Tier 2 (pixel-level):** Slower, requires QApplication, but catches rendering-specific issues. Only parametrized over key themes for speed.
++- **Why both:** Tier 1 catches the class of bugs seen so far (same color → invisible). Tier 2 catches future rendering regressions.
++
++### Decision: Keep the fixture pattern from test_title_bar_unit.py
++- The `main_window` fixture with mocked config/theme is proven and avoids importing the full app. Reuse it in new test files.
++
++### Decision: EditTaskDialog excluded from simple construction tests
++- `EditTaskDialog` requires a full task object and many UI elements. Skip it in the simple construction sweep or mock aggressively. Other 9 subclasses are straightforward to construct.
++
++---
++
++## Expected End State
++
++- No `tests/e2e/` directory. No pywinauto, mss, or psutil test dependencies.
++- ~30-40 new widget tests covering MainWindow, sidebar, theme loading, dialog construction, and transparency detection.
++- Transparent-background regressions caught at two levels: palette contrast checks (fast) and pixel opacity checks (rendering-verified).
++- Theme validation extended to verify token completeness and QSS template coverage.
++- All existing tests unaffected and passing.
++- Full test suite runs in seconds, not minutes (no subprocess launching).
+diff --git a/grouper/styles/_base.qss b/grouper/styles/_base.qss
+index 7e53693..0623937 100644
+--- a/grouper/styles/_base.qss
++++ b/grouper/styles/_base.qss
+@@ -83,7 +83,7 @@ QMainWindow::separator {
+ /* == Dialog Title Bar ====================================================== */
+ 
+ #dialogTitleBar {
+-    background-color: {{bg-secondary}};
++    background-color: {{dialog-title-bg}};
+     border-top-left-radius: 10px;
+     border-top-right-radius: 10px;
+ }
+@@ -115,17 +115,29 @@ QMainWindow::separator {
+ /* == Dialog Frame ========================================================== */
+ 
+ #dialogFrame {
+-    background-color: {{bg-primary}};
+-    border: 1px solid {{border}};
++    background-color: {{dialog-bg}};
++    border: 1px solid {{dialog-border}};
+     border-radius: 10px;
+ }
+ 
+ #dialogContent {
+-    background-color: {{bg-primary}};
++    background-color: {{dialog-content-bg}};
+     border-bottom-left-radius: 10px;
+     border-bottom-right-radius: 10px;
+ }
+ 
++#dialogContent QListWidget,
++#dialogContent QListView,
++#dialogContent QComboBox QAbstractItemView {
++    background-color: {{bg-secondary}};
++    border: 1px solid {{border}};
++}
++
++#dialogContent QListWidget QWidget,
++#dialogContent QListView QWidget {
++    background-color: {{bg-secondary}};
++}
++
+ /* == Sidebar =============================================================== */
+ 
+ #sidebar {
+@@ -181,6 +193,41 @@ QMainWindow::separator {
+     border-color: {{accent}};
+ }
+ 
++/* Parent-card transparency should not bleed into parented frameless dialogs. */
++#card QDialog {
++    background-color: {{bg-secondary}};
++}
++
++#card #dialogFrame {
++    background-color: {{dialog-bg}};
++    border: 1px solid {{dialog-border}};
++    border-radius: 10px;
++}
++
++#card #dialogTitleBar {
++    background-color: {{dialog-title-bg}};
++    border-top-left-radius: 10px;
++    border-top-right-radius: 10px;
++}
++
++#card #dialogContent {
++    background-color: {{dialog-content-bg}};
++    border-bottom-left-radius: 10px;
++    border-bottom-right-radius: 10px;
++}
++
++#card #dialogContent QListWidget,
++#card #dialogContent QListView,
++#card #dialogContent QComboBox QAbstractItemView {
++    background-color: {{bg-secondary}};
++    border: 1px solid {{border}};
++}
++
++#card #dialogContent QListWidget QWidget,
++#card #dialogContent QListView QWidget {
++    background-color: {{bg-secondary}};
++}
++
+ /* == Buttons =============================================================== */
+ 
+ QPushButton {
+diff --git a/grouper/ui/dialogs.py b/grouper/ui/dialogs.py
+index 618db38..c5856fa 100644
+--- a/grouper/ui/dialogs.py
++++ b/grouper/ui/dialogs.py
+@@ -72,11 +72,10 @@ class FramelessDialog(QDialog):
+     def __init__(self, parent=None):
+         super().__init__(parent)
+         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+ 
+         self._container = QFrame()
+         self._container.setObjectName("dialogFrame")
+-        self._container.setAutoFillBackground(True)
++        self._container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+ 
+         shadow = QGraphicsDropShadowEffect(self)
+         shadow.setBlurRadius(20)
+@@ -93,10 +92,12 @@ class FramelessDialog(QDialog):
+         self._container_layout.setSpacing(0)
+ 
+         self._title_bar = DialogTitleBar("", self._container)
++        self._title_bar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+         self._container_layout.addWidget(self._title_bar)
+ 
+         self._content = QWidget()
+         self._content.setObjectName("dialogContent")
++        self._content.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+         self._container_layout.addWidget(self._content)
+ 
+         self._content_layout = QVBoxLayout(self._content)
+@@ -676,6 +677,8 @@ class EditTaskDialog(FramelessDialog):
+         clear_layout(self._prereqs_container)
+         prereqs = get_prerequisite_tasks(self.task.id)
+         for pt in prereqs:
++            if pt.id is None:
++                continue
+             text = f"{truncate_title(pt.title)} → this"
+             chip = make_removable_chip(text, lambda pid=pt.id: self._remove_prereq(pid))
+             self._prereqs_container.addWidget(chip)
+diff --git a/grouper_core/colors.py b/grouper_core/colors.py
+index 6f3fa5a..8bf8e28 100644
+--- a/grouper_core/colors.py
++++ b/grouper_core/colors.py
+@@ -649,6 +649,60 @@ _THEME_PALETTE: dict[str, dict[str, str]] = {
+     },
+ }
+ 
++_DIALOG_SURFACE_TOKENS: dict[str, dict[str, str]] = {
++    "dark": {
++        "dialog-bg": "#2f3146",
++        "dialog-content-bg": "#2f3146",
++        "dialog-title-bg": "#3b3d57",
++        "dialog-border": "#565f89",
++    },
++    "light": {
++        "dialog-bg": "#ffffff",
++        "dialog-content-bg": "#ececf0",
++        "dialog-title-bg": "#e2e2e8",
++        "dialog-border": "#c7c7cc",
++    },
++    "black": {
++        "dialog-bg": "#0a0a0a",
++        "dialog-content-bg": "#0a0a0a",
++        "dialog-title-bg": "#141414",
++        "dialog-border": "#2a2a2a",
++    },
++    "sage": {
++        "dialog-bg": "#4a5d4c",
++        "dialog-content-bg": "#4a5d4c",
++        "dialog-title-bg": "#5a6d5c",
++        "dialog-border": "#6a7d6c",
++    },
++    "cathode": {
++        "dialog-bg": "#172517",
++        "dialog-content-bg": "#1a2c1a",
++        "dialog-title-bg": "#1f381f",
++        "dialog-border": "#2f6a38",
++    },
++    "argon": {
++        "dialog-bg": "#261b3d",
++        "dialog-content-bg": "#2d2048",
++        "dialog-title-bg": "#352655",
++        "dialog-border": "#5a4070",
++    },
++    "sodium": {
++        "dialog-bg": "#323022",
++        "dialog-content-bg": "#383626",
++        "dialog-title-bg": "#3e3c29",
++        "dialog-border": "#706050",
++    },
++    "oxygen": {
++        "dialog-bg": "#442020",
++        "dialog-content-bg": "#502626",
++        "dialog-title-bg": "#5c2c2c",
++        "dialog-border": "#864444",
++    },
++}
++
++for _theme_name, _tokens in _DIALOG_SURFACE_TOKENS.items():
++    _THEME_PALETTE[_theme_name].update(_tokens)
++
+ 
+ # ---------------------------------------------------------------------------
+ #  Public API
+diff --git a/pyproject.toml b/pyproject.toml
+index 9cd8d89..945ac03 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -27,18 +27,14 @@ server = [
+ ]
+ test = [
+     "pytest>=8.0",
+-    "pywinauto>=0.6.8; sys_platform == \"win32\"",
+-    "psutil>=5.9",
+     "ruff>=0.9",
+     "ty>=0.0.1a1",
+-    "mss>=9.0",
+ ]
+ 
+ [tool.pytest.ini_options]
+ testpaths = ["tests"]
+ markers = [
+     "slow: tests taking >5 seconds",
+-    "e2e: end-to-end tests launching the full app subprocess",
+     "widget: tests requiring a QApplication but not the full app",
+ ]
+ addopts = "-v --tb=short --strict-markers"
+diff --git a/tests/e2e/__init__.py b/tests/e2e/__init__.py
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/tests/e2e/conftest.py b/tests/e2e/conftest.py
+deleted file mode 100644
+index 1840eeb..0000000
+--- a/tests/e2e/conftest.py
++++ /dev/null
+@@ -1,110 +0,0 @@
+-"""conftest.py -- E2E fixtures for tests that launch the full Grouper app.
+-
+-Provides subprocess launch, pywinauto connection, and screenshot capture.
+-"""
+-
+-import os
+-import subprocess
+-import sys
+-import time
+-from collections.abc import Generator
+-from datetime import datetime
+-from pathlib import Path
+-
+-import psutil
+-import pytest
+-from pywinauto import Application
+-
+-PROJECT_ROOT = Path(__file__).parent.parent.parent
+-
+-
+-@pytest.fixture
+-def app_process(test_data_dir: Path) -> Generator[subprocess.Popen, None, None]:
+-    """Launch Grouper in a subprocess with an isolated test database."""
+-    env = os.environ.copy()
+-    env["GROUPER_DATA_DIR"] = str(test_data_dir)
+-    env["GROUPER_KEEP_CONSOLE"] = "1"
+-
+-    proc = subprocess.Popen(
+-        [sys.executable, "-m", "grouper"],
+-        cwd=str(PROJECT_ROOT),
+-        env=env,
+-        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+-    )
+-
+-    time.sleep(3)
+-    assert proc.poll() is None, "App process exited prematurely"
+-
+-    yield proc
+-
+-    try:
+-        parent = psutil.Process(proc.pid)
+-        for child in parent.children(recursive=True):
+-            child.kill()
+-        parent.kill()
+-        parent.wait(timeout=5)
+-    except (psutil.NoSuchProcess, psutil.TimeoutExpired):
+-        pass
+-
+-
+-@pytest.fixture
+-def app(app_process: subprocess.Popen) -> Application:
+-    """Connect pywinauto to the running Grouper window using UIA backend."""
+-    uia_app = Application(backend="uia")
+-    uia_app.connect(process=app_process.pid, timeout=10)
+-    return uia_app
+-
+-
+-@pytest.fixture
+-def main_window(app: Application):
+-    """Return the main Grouper window, maximized and ready for interaction."""
+-    win = app.window(title_re="Grouper.*Productivity Hub")
+-    win.wait("visible", timeout=10)
+-    win.maximize()
+-    return win
+-
+-
+-# ---------------------------------------------------------------------------
+-# Screenshot capture
+-# ---------------------------------------------------------------------------
+-
+-
+-def pytest_addoption(parser: pytest.Parser) -> None:
+-    parser.addoption(
+-        "--screenshot-dir",
+-        default=None,
+-        help="Directory for persistent screenshot output (default: tmp_path)",
+-    )
+-
+-
+-@pytest.fixture
+-def screenshot_dir(request: pytest.FixtureRequest, tmp_path: Path) -> Path:
+-    """Resolve screenshot output directory."""
+-    custom = request.config.getoption("--screenshot-dir")
+-    if custom:
+-        d = Path(custom)
+-        d.mkdir(parents=True, exist_ok=True)
+-        return d
+-    d = tmp_path / "screenshots"
+-    d.mkdir()
+-    return d
+-
+-
+-@pytest.fixture
+-def capture(screenshot_dir: Path):
+-    """Return a callable that takes a labeled screenshot via mss."""
+-    import mss
+-
+-    sct = mss.mss()
+-    seq = 0
+-
+-    def _capture(label: str = "") -> Path:
+-        nonlocal seq
+-        seq += 1
+-        ts = datetime.now().strftime("%H%M%S")
+-        name = f"{seq:03d}_{ts}_{label}.png"
+-        out = screenshot_dir / name
+-        sct.shot(output=str(out))
+-        return out
+-
+-    return _capture
+diff --git a/tests/e2e/helpers.py b/tests/e2e/helpers.py
+deleted file mode 100644
+index 4b519c5..0000000
+--- a/tests/e2e/helpers.py
++++ /dev/null
+@@ -1,229 +0,0 @@
+-"""helpers.py -- Shared pywinauto utilities for Grouper E2E tests."""
+-
+-import sqlite3
+-import time
+-from datetime import datetime
+-from pathlib import Path
+-
+-from pywinauto.controls.uiawrapper import UIAWrapper
+-
+-# Timing constants
+-ANIMATION_WAIT = 0.8  # card slide-in is 500ms; add margin
+-TIMER_TICK = 1.5  # QTimer fires at 1000ms intervals
+-REFRESH_WAIT = 0.3  # view refresh after navigation (showEvent)
+-
+-
+-# ---------------------------------------------------------------------------
+-# Navigation helpers
+-# ---------------------------------------------------------------------------
+-
+-
+-def click_sidebar_button(main_window: UIAWrapper, view_name: str) -> None:
+-    """Click a sidebar navigation button by matching its text.
+-
+-    Sidebar buttons have text like "🏠  Dashboard", "⏱  Time Tracker", etc.
+-    They are checkable QPushButtons, so UIA exposes them as CheckBox controls.
+-    Uses invoke() rather than click_input() because the UIA Invoke pattern
+-    reliably triggers Qt signals regardless of window geometry.
+-    """
+-    sidebar_buttons = main_window.descendants(control_type="CheckBox")
+-    for btn in sidebar_buttons:
+-        try:
+-            if view_name in btn.window_text():
+-                btn.invoke()
+-                time.sleep(REFRESH_WAIT)
+-                return
+-        except Exception:
+-            continue
+-    raise ValueError(f"Sidebar button for '{view_name}' not found")
+-
+-
+-# ---------------------------------------------------------------------------
+-# Element finders
+-# ---------------------------------------------------------------------------
+-
+-
+-def find_by_name_substring(parent: UIAWrapper, control_type: str, substring: str) -> UIAWrapper:
+-    """Find a control by partial name match within a parent."""
+-    controls = parent.descendants(control_type=control_type)
+-    for c in controls:
+-        try:
+-            if substring in c.window_text():
+-                return c
+-        except Exception:
+-            continue
+-    raise ValueError(f"No {control_type} containing '{substring}' found")
+-
+-
+-def find_all_by_name_substring(
+-    parent: UIAWrapper, control_type: str, substring: str
+-) -> list[UIAWrapper]:
+-    """Find all controls matching a partial name within a parent."""
+-    results: list[UIAWrapper] = []
+-    controls = parent.descendants(control_type=control_type)
+-    for c in controls:
+-        try:
+-            if substring in c.window_text():
+-                results.append(c)
+-        except Exception:
+-            continue
+-    return results
+-
+-
+-# ---------------------------------------------------------------------------
+-# Wait helpers
+-# ---------------------------------------------------------------------------
+-
+-
+-def wait_for_animation(duration: float = ANIMATION_WAIT) -> None:
+-    """Wait for Qt animations (card slide-in is 250ms)."""
+-    time.sleep(duration)
+-
+-
+-def wait_for_element(
+-    parent: UIAWrapper,
+-    control_type: str,
+-    name_substring: str,
+-    timeout: float = 5.0,
+-) -> UIAWrapper:
+-    """Wait until an element with matching text appears."""
+-    deadline = time.time() + timeout
+-    while time.time() < deadline:
+-        try:
+-            return find_by_name_substring(parent, control_type, name_substring)
+-        except ValueError:
+-            time.sleep(0.3)
+-    raise TimeoutError(
+-        f"Element {control_type} containing '{name_substring}' not found within {timeout}s"
+-    )
+-
+-
+-def wait_for_element_gone(
+-    parent: UIAWrapper,
+-    control_type: str,
+-    name_substring: str,
+-    timeout: float = 5.0,
+-) -> None:
+-    """Wait until an element with matching text disappears."""
+-    deadline = time.time() + timeout
+-    while time.time() < deadline:
+-        try:
+-            find_by_name_substring(parent, control_type, name_substring)
+-            time.sleep(0.3)
+-        except ValueError:
+-            return  # Element is gone
+-    raise TimeoutError(
+-        f"Element {control_type} containing '{name_substring}' still present after {timeout}s"
+-    )
+-
+-
+-def select_combo_item(combo: UIAWrapper, item_text: str) -> None:
+-    """Select an item in a Qt QComboBox by expanding and clicking the ListItem.
+-
+-    Qt combo boxes don't expose the UIA SelectionItem pattern properly,
+-    so we expand, find the ListItem, and click it.
+-    """
+-    combo.expand()
+-    time.sleep(0.3)
+-    items = combo.descendants(control_type="ListItem")
+-    for item in items:
+-        try:
+-            if item_text in item.window_text():
+-                item.click_input()
+-                time.sleep(0.3)
+-                return
+-        except Exception:
+-            continue
+-    combo.collapse()
+-    raise ValueError(f"Combo item '{item_text}' not found")
+-
+-
+-def count_controls(parent: UIAWrapper, control_type: str) -> int:
+-    """Count all descendants of a given control type."""
+-    return len(parent.descendants(control_type=control_type))
+-
+-
+-# ---------------------------------------------------------------------------
+-# Database seeding helpers
+-# ---------------------------------------------------------------------------
+-
+-
+-def seed_activity_via_db(
+-    data_dir: Path,
+-    name: str,
+-    groups: list[str] | None = None,
+-    is_background: bool = False,
+-) -> int:
+-    """Insert an activity into the test database for setup.
+-
+-    Must be called AFTER the app has started (so the schema exists).
+-    Returns the activity id.
+-    """
+-    db_path = data_dir / "grouper.db"
+-    conn = sqlite3.connect(str(db_path))
+-    conn.execute("PRAGMA foreign_keys = ON")
+-
+-    now = datetime.now().isoformat()
+-    cur = conn.execute(
+-        "INSERT INTO activities (name, is_background, created_at) VALUES (?, ?, ?)",
+-        (name, 1 if is_background else 0, now),
+-    )
+-    aid = cur.lastrowid
+-
+-    if groups:
+-        for g in groups:
+-            # Ensure the group exists in the groups table
+-            row = conn.execute(
+-                "SELECT id FROM groups WHERE name = ? COLLATE NOCASE", (g,)
+-            ).fetchone()
+-            if row:
+-                gid = row[0]
+-            else:
+-                cur2 = conn.execute("INSERT INTO groups (name) VALUES (?)", (g,))
+-                gid = cur2.lastrowid
+-            conn.execute(
+-                "INSERT INTO activity_groups (activity_id, group_id) VALUES (?, ?)",
+-                (aid, gid),
+-            )
+-
+-    conn.commit()
+-    conn.close()
+-    return aid
+-
+-
+-def seed_project_and_board_via_db(
+-    data_dir: Path,
+-    project_name: str,
+-    board_name: str = "Default Board",
+-) -> tuple[int, int]:
+-    """Insert a board and project directly into the test database.
+-
+-    Returns (board_id, project_id).
+-    """
+-    db_path = data_dir / "grouper.db"
+-    conn = sqlite3.connect(str(db_path))
+-    conn.execute("PRAGMA foreign_keys = ON")
+-
+-    now = datetime.now().isoformat()
+-
+-    # Get or create board
+-    row = conn.execute("SELECT id FROM boards WHERE name = ?", (board_name,)).fetchone()
+-    if row:
+-        board_id = row[0]
+-    else:
+-        cur = conn.execute(
+-            "INSERT INTO boards (name, created_at) VALUES (?, ?)",
+-            (board_name, now),
+-        )
+-        board_id = cur.lastrowid
+-
+-    # Create project
+-    cur = conn.execute(
+-        "INSERT INTO projects (name, board_id, created_at) VALUES (?, ?, ?)",
+-        (project_name, board_id, now),
+-    )
+-    project_id = cur.lastrowid
+-
+-    conn.commit()
+-    conn.close()
+-    return board_id, project_id
+diff --git a/tests/e2e/test_app.py b/tests/e2e/test_app.py
+deleted file mode 100644
+index dfc9796..0000000
+--- a/tests/e2e/test_app.py
++++ /dev/null
+@@ -1,217 +0,0 @@
+-"""test_app.py -- Consolidated E2E tests for Grouper.
+-
+-Five tests that launch the real app in a subprocess and validate
+-end-to-end behavior via pywinauto. These are the "does the app work"
+-tests -- everything else is covered by unit and widget tests.
+-"""
+-
+-from __future__ import annotations
+-
+-import time
+-
+-import pytest
+-
+-from tests.e2e.helpers import (
+-    click_sidebar_button,
+-    find_all_by_name_substring,
+-    find_by_name_substring,
+-    seed_activity_via_db,
+-    select_combo_item,
+-    wait_for_animation,
+-    wait_for_element,
+-)
+-
+-pytestmark = pytest.mark.e2e
+-
+-SIDEBAR_ITEMS = [
+-    "Dashboard",
+-    "Time Tracker",
+-    "Task Board",
+-    "Task List",
+-    "Calendar",
+-    "History",
+-    "Summary",
+-    "Settings",
+-    "About",
+-]
+-
+-
+-def test_app_launches_and_renders(main_window, capture) -> None:
+-    """App starts, window is visible, title is correct, has non-zero size."""
+-    capture("launched")
+-    assert main_window.is_visible()
+-
+-    title = main_window.window_text()
+-    assert "Grouper" in title
+-    assert "Productivity Hub" in title
+-
+-    rect = main_window.rectangle()
+-    assert rect.width() > 0
+-    assert rect.height() > 0
+-
+-    heading = find_by_name_substring(main_window, "Text", "Dashboard")
+-    assert heading.is_visible()
+-    capture("dashboard_loaded")
+-
+-
+-def test_sidebar_navigation_all_views(main_window, capture) -> None:
+-    """Click every sidebar item; confirm window stays visible after each."""
+-    for item in SIDEBAR_ITEMS:
+-        click_sidebar_button(main_window, item)
+-        time.sleep(0.3)
+-        assert main_window.is_visible(), f"Window gone after clicking {item}"
+-
+-    capture("all_views_visited")
+-
+-
+-def test_title_bar_controls(main_window, capture) -> None:
+-    """Verify min/max/close buttons exist and maximize/restore toggles."""
+-    # Check buttons exist
+-    buttons = main_window.descendants(control_type="Button")
+-    button_texts = []
+-    for btn in buttons:
+-        try:
+-            button_texts.append(btn.window_text())
+-        except Exception:
+-            continue
+-
+-    assert any("\u2014" in t for t in button_texts), "Minimize button not found"
+-    assert any("\u2610" in t or "\u2750" in t for t in button_texts), "Maximize button not found"
+-    assert any("\u2715" in t for t in button_texts), "Close button not found"
+-
+-    capture("buttons_visible")
+-
+-    # Test maximize/restore toggle
+-    rect_max = main_window.rectangle()
+-
+-    # Click restore (find the maximize/restore button)
+-    for btn in buttons:
+-        try:
+-            txt = btn.window_text()
+-            if "\u2750" in txt or "\u2610" in txt:
+-                btn.click_input()
+-                break
+-        except Exception:
+-            continue
+-    time.sleep(0.8)
+-
+-    rect_normal = main_window.rectangle()
+-    assert main_window.is_visible()
+-    assert rect_normal.width() <= rect_max.width()
+-
+-    capture("restored")
+-
+-    # Re-maximize
+-    buttons = main_window.descendants(control_type="Button")
+-    for btn in buttons:
+-        try:
+-            txt = btn.window_text()
+-            if "\u2610" in txt or "\u2750" in txt:
+-                btn.click_input()
+-                break
+-        except Exception:
+-            continue
+-    time.sleep(0.8)
+-
+-    assert main_window.is_visible()
+-    capture("remaximized")
+-
+-    # Test minimize and restore
+-    for btn in main_window.descendants(control_type="Button"):
+-        try:
+-            if "\u2014" in btn.window_text():
+-                btn.invoke()
+-                break
+-        except Exception:
+-            continue
+-    time.sleep(1.0)
+-
+-    main_window.restore()
+-    time.sleep(0.5)
+-    main_window.wait("visible", timeout=5)
+-    assert main_window.is_visible()
+-    capture("minimize_restore_done")
+-
+-
+-def test_theme_switch_survives(main_window, capture) -> None:
+-    """Switch to Light theme, navigate away, switch back to Dark."""
+-    click_sidebar_button(main_window, "Settings")
+-    time.sleep(0.5)
+-
+-    combos = main_window.descendants(control_type="ComboBox")
+-    assert combos, "No ComboBox found on Settings page"
+-
+-    select_combo_item(combos[0], "Light")
+-    time.sleep(0.5)
+-    assert main_window.is_visible()
+-    capture("light_theme")
+-
+-    click_sidebar_button(main_window, "Dashboard")
+-    time.sleep(0.3)
+-    assert main_window.is_visible()
+-
+-    click_sidebar_button(main_window, "Settings")
+-    time.sleep(0.3)
+-
+-    combos = main_window.descendants(control_type="ComboBox")
+-    select_combo_item(combos[0], "Dark")
+-    time.sleep(0.5)
+-    assert main_window.is_visible()
+-    capture("dark_theme_restored")
+-
+-
+-def test_session_lifecycle(main_window, test_data_dir, capture) -> None:
+-    """Seed activity, start session, pause, resume, stop -- full lifecycle."""
+-    seed_activity_via_db(test_data_dir, "Coding", groups=["Dev"])
+-
+-    # Navigate to trigger refresh
+-    click_sidebar_button(main_window, "Settings")
+-    click_sidebar_button(main_window, "Time Tracker")
+-
+-    capture("tracker_loaded")
+-
+-    # Select group and click activity to start session
+-    combos = main_window.descendants(control_type="ComboBox")
+-    if combos:
+-        select_combo_item(combos[0], "Dev")
+-        time.sleep(0.5)
+-
+-    label = wait_for_element(main_window, "Text", "Coding", timeout=5)
+-    label.click_input()
+-    wait_for_animation()
+-
+-    capture("session_started")
+-
+-    # Verify running state
+-    pause_btn = find_by_name_substring(main_window, "Button", "Pause")
+-    assert pause_btn.is_visible()
+-    stop_btn = find_by_name_substring(main_window, "Button", "Stop")
+-    assert stop_btn.is_visible()
+-
+-    # Pause
+-    pause_btn.click_input()
+-    wait_for_animation()
+-    resume_btn = wait_for_element(main_window, "Button", "Resume", timeout=5)
+-    assert resume_btn.is_visible()
+-    assert len(find_all_by_name_substring(main_window, "Button", "Pause")) == 0
+-    capture("session_paused")
+-
+-    # Resume
+-    resume_btn.click_input()
+-    wait_for_animation()
+-    pause_btn = wait_for_element(main_window, "Button", "Pause", timeout=5)
+-    assert pause_btn.is_visible()
+-    capture("session_resumed")
+-
+-    # Stop
+-    stop_btn = find_by_name_substring(main_window, "Button", "Stop")
+-    stop_btn.click_input()
+-    time.sleep(0.5)
+-
+-    confirm = wait_for_element(main_window, "Button", "Confirm", timeout=5)
+-    confirm.click_input()
+-    wait_for_animation(1.0)
+-
+-    placeholder = wait_for_element(main_window, "Text", "No active sessions", timeout=5)
+-    assert placeholder.is_visible()
+-    capture("session_stopped")
+diff --git a/tests/widget/conftest.py b/tests/widget/conftest.py
+index c3482d9..3b042a1 100644
+--- a/tests/widget/conftest.py
++++ b/tests/widget/conftest.py
+@@ -1,10 +1,13 @@
+ """conftest.py -- Widget test fixtures.
+ 
+-Provides a session-scoped QApplication so all widget tests share one instance.
+-PySide6 allows only one QApplication per process.
++Provides a session-scoped QApplication plus a lightweight MainWindow fixture
++that reuses the existing isolated test database instead of touching user data.
+ """
+ 
++from __future__ import annotations
++
+ import sys
++from unittest.mock import MagicMock, patch
+ 
+ import pytest
+ from PySide6.QtWidgets import QApplication
+@@ -17,3 +20,27 @@ def qapp() -> QApplication:
+     if app is None:
+         app = QApplication(sys.argv)
+     return app
++
++
++@pytest.fixture
++def main_window(qapp: QApplication):
++    """Create a MainWindow with a small mocked config surface."""
++    cfg = MagicMock()
++    cfg.theme = "dark"
++    cfg.window_width = 1000
++    cfg.window_height = 600
++    cfg.animations_enabled = False
++
++    with (
++        patch("grouper.app.get_config", return_value=cfg),
++        patch("grouper.app.theme_colors", return_value={"window-border": "#7aa2f7"}),
++        patch("grouper.ui.sidebar.get_config", return_value=cfg),
++        patch("grouper.ui.animated_stack.get_config", return_value=cfg),
++    ):
++        from grouper.app import MainWindow
++
++        win = MainWindow()
++        yield win
++        win.close()
++        win.deleteLater()
++        qapp.processEvents()
+diff --git a/tests/widget/test_dialogs.py b/tests/widget/test_dialogs.py
+new file mode 100644
+index 0000000..99b1740
+--- /dev/null
++++ b/tests/widget/test_dialogs.py
+@@ -0,0 +1,98 @@
++"""Widget tests covering frameless dialog construction."""
++
++from __future__ import annotations
++
++from collections.abc import Callable
++
++import pytest
++from grouper.ui.dialogs import (
++    AddBoardDialog,
++    AddGroupDialog,
++    ConfirmDialog,
++    CreateActivityDialog,
++    CreateProjectDialog,
++    CreateTaskDialog,
++    EditBoardDialog,
++    EditProjectDialog,
++    FramelessDialog,
++    StopSessionDialog,
++)
++from PySide6.QtCore import Qt
++from PySide6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QWidget
++
++pytestmark = pytest.mark.widget
++
++
++class _TestDialog(FramelessDialog):
++    def __init__(self) -> None:
++        super().__init__()
++        self.setWindowTitle("Test Dialog")
++
++
++class TestFramelessDialog:
++    """Verify the base dialog structure that all subclasses inherit."""
++
++    def test_does_not_use_translucent_background_attribute(self, qapp) -> None:
++        dialog = _TestDialog()
++        try:
++            assert not dialog.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
++        finally:
++            dialog.deleteLater()
++
++    def test_has_frameless_window_hint(self, qapp) -> None:
++        dialog = _TestDialog()
++        try:
++            flags = dialog.windowFlags()
++            assert flags & Qt.WindowType.FramelessWindowHint
++            assert flags & Qt.WindowType.Dialog
++        finally:
++            dialog.deleteLater()
++
++    def test_dialog_frame_object_name(self, qapp) -> None:
++        dialog = _TestDialog()
++        try:
++            assert dialog.findChild(QFrame, "dialogFrame") is not None
++        finally:
++            dialog.deleteLater()
++
++    def test_dialog_content_object_name(self, qapp) -> None:
++        dialog = _TestDialog()
++        try:
++            assert dialog.findChild(QWidget, "dialogContent") is not None
++        finally:
++            dialog.deleteLater()
++
++    def test_dialog_has_drop_shadow(self, qapp) -> None:
++        dialog = _TestDialog()
++        try:
++            frame = dialog.findChild(QFrame, "dialogFrame")
++            assert frame is not None
++            assert isinstance(frame.graphicsEffect(), QGraphicsDropShadowEffect)
++        finally:
++            dialog.deleteLater()
++
++
++_DIALOG_FACTORIES: list[tuple[str, Callable[[], FramelessDialog]]] = [
++    ("CreateActivityDialog", lambda: CreateActivityDialog()),
++    ("CreateProjectDialog", lambda: CreateProjectDialog(1)),
++    ("EditProjectDialog", lambda: EditProjectDialog("Project", 1, None)),
++    ("EditBoardDialog", lambda: EditBoardDialog(1, "Board")),
++    ("AddBoardDialog", lambda: AddBoardDialog()),
++    ("CreateTaskDialog", lambda: CreateTaskDialog([])),
++    ("StopSessionDialog", lambda: StopSessionDialog("Activity")),
++    ("ConfirmDialog", lambda: ConfirmDialog("Confirm", "Body text")),
++    ("AddGroupDialog", lambda: AddGroupDialog(["Focus"], [])),
++]
++
++
++class TestDialogSubclasses:
++    """Verify lightweight construction coverage across dialog subclasses."""
++
++    @pytest.mark.parametrize(("dialog_name", "factory"), _DIALOG_FACTORIES)
++    def test_dialog_constructs(self, qapp, dialog_name: str, factory: Callable[[], FramelessDialog]):
++        dialog = factory()
++        try:
++            assert isinstance(dialog, FramelessDialog), dialog_name
++            assert dialog.windowTitle()
++        finally:
++            dialog.deleteLater()
+diff --git a/tests/widget/test_main_window.py b/tests/widget/test_main_window.py
+new file mode 100644
+index 0000000..496146c
+--- /dev/null
++++ b/tests/widget/test_main_window.py
+@@ -0,0 +1,33 @@
++"""Widget tests covering MainWindow construction."""
++
++from __future__ import annotations
++
++import pytest
++from grouper.app import MainWindow, _BorderedCentral
++from grouper.ui.animated_stack import AnimatedViewStack
++from grouper.ui.sidebar import Sidebar
++from grouper.ui.title_bar import TitleBar
++
++pytestmark = pytest.mark.widget
++
++
++class TestMainWindowConstruction:
++    """Replace coarse launch checks with direct widget assertions."""
++
++    def test_window_title_contains_grouper(self, main_window) -> None:
++        assert "Grouper" in main_window.windowTitle()
++
++    def test_central_widget_exists(self, main_window) -> None:
++        assert isinstance(main_window.centralWidget(), _BorderedCentral)
++
++    def test_stack_widget_exists(self, main_window) -> None:
++        assert isinstance(main_window._stack, AnimatedViewStack)
++
++    def test_sidebar_exists(self, main_window) -> None:
++        assert isinstance(main_window._sidebar, Sidebar)
++
++    def test_title_bar_exists(self, main_window) -> None:
++        assert isinstance(main_window._title_bar, TitleBar)
++
++    def test_stack_has_expected_view_count(self, main_window) -> None:
++        assert main_window._stack.count() == len(MainWindow.VIEW_MAP)
+diff --git a/tests/widget/test_sidebar.py b/tests/widget/test_sidebar.py
+new file mode 100644
+index 0000000..c0c1da3
+--- /dev/null
++++ b/tests/widget/test_sidebar.py
+@@ -0,0 +1,34 @@
++"""Widget tests covering sidebar navigation."""
++
++from __future__ import annotations
++
++import pytest
++from grouper.app import MainWindow
++
++pytestmark = pytest.mark.widget
++
++
++class TestSidebarNavigation:
++    """Replace the old sidebar E2E coverage with direct widget tests."""
++
++    def test_sidebar_has_all_view_buttons(self, main_window) -> None:
++        assert set(main_window._sidebar._buttons) == set(MainWindow.VIEW_MAP)
++
++    def test_view_names_match_stack_indices(self, main_window) -> None:
++        assert main_window._stack.count() == len(MainWindow.VIEW_MAP)
++        for name, index in MainWindow.VIEW_MAP.items():
++            assert name in main_window._sidebar._buttons
++            assert main_window._stack.widget(index) is not None
++
++    def test_clicking_sidebar_button_switches_stack(self, main_window, qapp) -> None:
++        target_name = "Settings"
++        target_index = MainWindow.VIEW_MAP[target_name]
++
++        main_window.show()
++        qapp.processEvents()
++
++        main_window._sidebar._buttons[target_name].click()
++        qapp.processEvents()
++
++        assert main_window._stack.currentIndex() == target_index
++        assert main_window._sidebar._buttons[target_name].isChecked()
+diff --git a/tests/widget/test_theme_load.py b/tests/widget/test_theme_load.py
+new file mode 100644
+index 0000000..1e488ed
+--- /dev/null
++++ b/tests/widget/test_theme_load.py
+@@ -0,0 +1,51 @@
++"""Widget tests covering theme loading and switching."""
++
++from __future__ import annotations
++
++import pytest
++from grouper.styles import _get_template, available_themes, load_theme
++
++pytestmark = pytest.mark.widget
++
++
++class TestLoadTheme:
++    """Verify the QSS rendering pipeline and theme switching."""
++
++    def test_load_theme_produces_nonempty_stylesheet(self, qapp) -> None:
++        load_theme(qapp, "dark")
++        assert qapp.styleSheet().strip()
++
++    def test_load_theme_replaces_all_tokens(self, qapp) -> None:
++        load_theme(qapp, "dark")
++        assert "{{" not in qapp.styleSheet()
++        assert "}}" not in qapp.styleSheet()
++
++    @pytest.mark.parametrize("theme", available_themes())
++    def test_every_theme_loads_without_error(self, qapp, theme: str) -> None:
++        load_theme(qapp, theme)
++        rendered = qapp.styleSheet()
++        assert rendered.strip()
++        assert rendered != _get_template()
++
++    def test_theme_switch_changes_stylesheet(self, qapp) -> None:
++        load_theme(qapp, "dark")
++        dark = qapp.styleSheet()
++
++        load_theme(qapp, "light")
++        light = qapp.styleSheet()
++
++        assert dark != light
++
++    def test_theme_switch_preserves_window_visibility(self, main_window, qapp) -> None:
++        main_window.show()
++        load_theme(qapp, "dark")
++        qapp.processEvents()
++
++        load_theme(qapp, "light")
++        qapp.processEvents()
++
++        main_window._sidebar._buttons["About"].click()
++        qapp.processEvents()
++
++        assert main_window.isVisible()
++        assert main_window._stack.currentIndex() == main_window.VIEW_MAP["About"]
+diff --git a/tests/widget/test_theme_validation.py b/tests/widget/test_theme_validation.py
+index f5a5bfb..dff1bb4 100644
+--- a/tests/widget/test_theme_validation.py
++++ b/tests/widget/test_theme_validation.py
+@@ -1,14 +1,15 @@
+-"""test_theme_validation.py -- Theme color palette validation.
+-
+-Verifies that each theme has distinct, non-clashing error/success colors
+-and that all color values are valid hex.
+-"""
++"""test_theme_validation.py -- Theme palette and QSS token validation."""
+ 
+ from __future__ import annotations
+ 
+ import re
++from typing import ClassVar
+ 
+ import pytest
++from grouper.styles import _THEME_PALETTE, _get_template
++
++_HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
++_TOKEN_RE = re.compile(r"\{\{([\w-]+)\}\}")
+ 
+ 
+ class TestThemePaletteColors:
+@@ -16,8 +17,6 @@ class TestThemePaletteColors:
+ 
+     @pytest.fixture(autouse=True)
+     def _load_palette(self) -> None:
+-        from grouper.styles import _THEME_PALETTE
+-
+         self.palette = _THEME_PALETTE
+ 
+     def test_all_themes_have_danger_and_success(self) -> None:
+@@ -32,7 +31,64 @@ class TestThemePaletteColors:
+             )
+ 
+     def test_colors_are_valid_hex(self) -> None:
+-        hex_re = re.compile(r"^#[0-9a-fA-F]{6}$")
+         for name, colors in self.palette.items():
+             for key in ("danger", "success"):
+-                assert hex_re.match(colors[key]), f"{name}.{key} is not valid hex: {colors[key]}"
++                assert _HEX_RE.match(colors[key]), f"{name}.{key} is not valid hex: {colors[key]}"
++
++
++class TestThemeTokenCompleteness:
++    """Verify every theme can fully satisfy the QSS template."""
++
++    REQUIRED_TOKENS: ClassVar[tuple[str, ...]] = (
++        "bg-primary",
++        "bg-secondary",
++        "bg-tertiary",
++        "bg-sidebar",
++        "border",
++        "text",
++        "text-muted",
++        "accent",
++        "accent-hover",
++        "accent-active",
++        "danger",
++        "success",
++        "warning",
++        "dialog-bg",
++        "dialog-content-bg",
++        "dialog-title-bg",
++        "dialog-border",
++    )
++
++    def test_all_themes_have_required_tokens(self) -> None:
++        required = set(self.REQUIRED_TOKENS)
++        for name, colors in _THEME_PALETTE.items():
++            assert required.issubset(colors), f"{name} missing {sorted(required - set(colors))}"
++
++    def test_all_token_values_are_valid_hex(self) -> None:
++        for name, colors in _THEME_PALETTE.items():
++            for token, value in colors.items():
++                assert _HEX_RE.match(value), f"{name}.{token} is not valid hex: {value}"
++
++    def test_no_duplicate_tokens_within_theme(self) -> None:
++        for name, colors in _THEME_PALETTE.items():
++            keys = list(colors)
++            assert len(keys) == len(set(keys)), f"{name} contains duplicate token keys"
++
++
++class TestQssTemplateTokenCoverage:
++    """Verify template placeholders and palette tokens stay in sync."""
++
++    def test_all_qss_tokens_have_palette_values(self) -> None:
++        tokens = set(_TOKEN_RE.findall(_get_template()))
++        assert tokens, "expected _base.qss to contain theme tokens"
++        for name, colors in _THEME_PALETTE.items():
++            assert tokens.issubset(colors), f"{name} missing QSS tokens {sorted(tokens - set(colors))}"
++
++    def test_no_unresolved_tokens_after_render(self) -> None:
++        template = _get_template()
++        for name, colors in _THEME_PALETTE.items():
++            rendered = template
++            for token, value in colors.items():
++                rendered = rendered.replace("{{" + token + "}}", value)
++            assert "{{" not in rendered, name
++            assert "}}" not in rendered, name
+diff --git a/tests/widget/test_transparency.py b/tests/widget/test_transparency.py
+new file mode 100644
+index 0000000..79be2f1
+--- /dev/null
++++ b/tests/widget/test_transparency.py
+@@ -0,0 +1,364 @@
++"""Tests for dialog surface opacity and theme contrast."""
++
++from __future__ import annotations
++
++import math
++import re
++
++import pytest
++from grouper.models import Activity
++from grouper.styles import _THEME_PALETTE, available_themes, load_theme
++from grouper.ui.activity_config import _ActivityDetailEditor
++from grouper.ui.dialogs import AddGroupDialog, FramelessDialog
++from PySide6.QtCore import QPoint, QRect
++from PySide6.QtGui import QColor, QImage
++from PySide6.QtTest import QTest
++from PySide6.QtWidgets import QFrame, QLabel, QListWidget, QWidget
++
++pytestmark = pytest.mark.widget
++
++_HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
++_KEY_PIXEL_THEMES = ["black", "dark", "light", "oxygen"]
++
++
++def _hex_to_rgb(hex_str: str) -> tuple[int, int, int]:
++    assert _HEX_RE.match(hex_str), f"invalid hex color: {hex_str}"
++    return (
++        int(hex_str[1:3], 16),
++        int(hex_str[3:5], 16),
++        int(hex_str[5:7], 16),
++    )
++
++
++def _relative_luminance(hex_str: str) -> float:
++    def _channel(value: int) -> float:
++        normalized = value / 255.0
++        if normalized <= 0.03928:
++            return normalized / 12.92
++        return ((normalized + 0.055) / 1.055) ** 2.4
++
++    red, green, blue = _hex_to_rgb(hex_str)
++    return 0.2126 * _channel(red) + 0.7152 * _channel(green) + 0.0722 * _channel(blue)
++
++
++def _contrast_ratio(c1: str, c2: str) -> float:
++    lighter = max(_relative_luminance(c1), _relative_luminance(c2))
++    darker = min(_relative_luminance(c1), _relative_luminance(c2))
++    return (lighter + 0.05) / (darker + 0.05)
++
++
++def _perceptual_delta(c1: str, c2: str) -> float:
++    r1, g1, b1 = _hex_to_rgb(c1)
++    r2, g2, b2 = _hex_to_rgb(c2)
++    distance = math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
++    return distance / math.sqrt(3 * 255**2)
++
++
++def _grab_screen_rect(widget: QWidget) -> tuple[QRect, QImage]:
++    screen = widget.screen()
++    assert screen is not None
++    rect = widget.frameGeometry()
++    pixmap = screen.grabWindow(0, rect.x(), rect.y(), rect.width(), rect.height())
++    return rect, pixmap.toImage()
++
++
++def _sample_screen_pixel(widget: QWidget, point: QPoint) -> QColor:
++    rect, image = _grab_screen_rect(widget)
++    return image.pixelColor(point - rect.topLeft())
++
++
++def _sample_widget_pixel(widget: QWidget, point: QPoint) -> QColor:
++    image = widget.grab().toImage()
++    return image.pixelColor(point)
++
++
++def _sample_hex(widget: QWidget, point: QPoint) -> str:
++    return _sample_screen_pixel(widget, point).name().lower()
++
++
++def _center_point(widget: QWidget) -> QPoint:
++    return widget.rect().center()
++
++
++def _global_center_point(widget: QWidget) -> QPoint:
++    return widget.mapToGlobal(widget.rect().center())
++
++
++def _global_page_sample_point(widget: QWidget) -> QPoint:
++    return widget.mapToGlobal(QPoint(20, 20))
++
++
++def _global_card_sample_point(widget: QWidget) -> QPoint:
++    return widget.mapToGlobal(QPoint(widget.width() - 40, widget.height() - 40))
++
++
++def _settle_ui(qapp) -> None:
++    qapp.processEvents()
++    QTest.qWait(25)
++    qapp.processEvents()
++
++
++class _TestDialog(FramelessDialog):
++    def __init__(self, parent: QWidget | None = None) -> None:
++        super().__init__(parent)
++        self.setWindowTitle("Opacity Test")
++        self.resize(420, 280)
++        layout = self.contentLayout()
++        layout.addWidget(QLabel("Dialog body"))
++        layout.addStretch(1)
++
++
++@pytest.fixture
++def themed_dialog(qapp):
++    def _make(theme: str = "dark") -> FramelessDialog:
++        load_theme(qapp, theme)
++        dialog = _TestDialog()
++        dialog.move(100, 100)
++        dialog.show()
++        dialog.raise_()
++        dialog.activateWindow()
++        _settle_ui(qapp)
++        return dialog
++
++    return _make
++
++
++@pytest.fixture
++def themed_page(qapp):
++    def _make(theme: str = "dark") -> QWidget:
++        load_theme(qapp, theme)
++        page = QWidget()
++        page.resize(420, 280)
++        page.move(40, 40)
++        page.show()
++        _settle_ui(qapp)
++        return page
++
++    return _make
++
++
++class TestPaletteContrastForDialogs:
++    """Verify every theme provides enough dialog chrome separation."""
++
++    def test_dialog_chrome_differs_from_page_bg(self) -> None:
++        for name, colors in _THEME_PALETTE.items():
++            deltas = [
++                _perceptual_delta(colors["bg-primary"], colors["dialog-title-bg"]),
++                _perceptual_delta(colors["bg-primary"], colors["dialog-border"]),
++            ]
++            assert max(deltas) >= 0.04, f"{name}: dialog chrome blends into page background"
++
++    def test_all_themes_have_dialog_critical_tokens(self) -> None:
++        required = {
++            "bg-primary",
++            "text",
++            "text-muted",
++            "dialog-bg",
++            "dialog-content-bg",
++            "dialog-title-bg",
++            "dialog-border",
++        }
++        for name, colors in _THEME_PALETTE.items():
++            assert required.issubset(colors), f"{name} missing {sorted(required - set(colors))}"
++
++    def test_black_dialog_uses_standard_black_theme_surfaces(self) -> None:
++        colors = _THEME_PALETTE["black"]
++        assert colors["dialog-bg"] == colors["bg-primary"]
++        assert colors["dialog-content-bg"] == colors["bg-primary"]
++        assert colors["dialog-title-bg"] == colors["bg-secondary"]
++        assert colors["dialog-border"] == colors["border"]
++
++    def test_border_differs_from_bg_primary(self) -> None:
++        for name, colors in _THEME_PALETTE.items():
++            assert colors["dialog-border"] != colors["bg-primary"], name
++            assert _contrast_ratio(colors["dialog-border"], colors["bg-primary"]) > 1.05, name
++
++
++class TestFramelessDialogOpacity:
++    """Verify shown frameless dialogs render distinct screen-visible surfaces."""
++
++    @pytest.mark.parametrize("theme", available_themes())
++    def test_dialog_content_is_opaque_on_screen(self, qapp, themed_dialog, theme: str) -> None:
++        dialog = themed_dialog(theme)
++        try:
++            content = dialog.findChild(QWidget, "dialogContent")
++            assert content is not None
++            pixel = _sample_screen_pixel(dialog, _global_center_point(content))
++            assert pixel.alpha() == 255
++        finally:
++            dialog.close()
++            dialog.deleteLater()
++            qapp.processEvents()
++
++    @pytest.mark.parametrize("theme", available_themes())
++    def test_dialog_frame_is_opaque_on_screen(self, qapp, themed_dialog, theme: str) -> None:
++        dialog = themed_dialog(theme)
++        try:
++            frame = dialog.findChild(QFrame, "dialogFrame")
++            assert frame is not None
++            pixel = _sample_screen_pixel(dialog, frame.mapToGlobal(QPoint(10, 10)))
++            assert pixel.alpha() == 255
++        finally:
++            dialog.close()
++            dialog.deleteLater()
++            qapp.processEvents()
++
++    @pytest.mark.parametrize("theme", _KEY_PIXEL_THEMES)
++    def test_dialog_chrome_differs_from_plain_page(self, qapp, themed_dialog, themed_page, theme: str) -> None:
++        page = themed_page(theme)
++        dialog = themed_dialog(theme)
++        try:
++            page_hex = _sample_hex(page, _global_page_sample_point(page))
++            title_bar = dialog.findChild(QWidget, "dialogTitleBar")
++            assert title_bar is not None
++
++            title_hex = _sample_hex(dialog, _global_center_point(title_bar))
++
++            assert _perceptual_delta(page_hex, title_hex) >= 0.015, (
++                f"{theme}: dialog chrome is visually indistinguishable from the page"
++            )
++        finally:
++            page.close()
++            page.deleteLater()
++            dialog.close()
++            dialog.deleteLater()
++            qapp.processEvents()
++
++    @pytest.mark.parametrize("theme", _KEY_PIXEL_THEMES)
++    def test_parented_dialog_chrome_differs_from_host_page(self, qapp, theme: str) -> None:
++        load_theme(qapp, theme)
++        host = QWidget()
++        host.resize(800, 600)
++        host.move(0, 0)
++        host.show()
++        _settle_ui(qapp)
++
++        dialog = _TestDialog(host)
++        dialog.move(100, 100)
++        dialog.show()
++        dialog.raise_()
++        dialog.activateWindow()
++        _settle_ui(qapp)
++        try:
++            title_bar = dialog.findChild(QWidget, "dialogTitleBar")
++            assert title_bar is not None
++            host_hex = _sample_screen_pixel(host, _global_page_sample_point(host)).name().lower()
++            title_hex = _sample_screen_pixel(dialog, _global_center_point(title_bar)).name().lower()
++            assert _perceptual_delta(host_hex, title_hex) >= 0.02, (
++                f"{theme}: parented dialog chrome is visually indistinguishable from the host page"
++            )
++        finally:
++            host.close()
++            host.deleteLater()
++            dialog.close()
++            dialog.deleteLater()
++            qapp.processEvents()
++
++
++class TestAddGroupDialogContrast:
++    @pytest.mark.parametrize("theme", ["black", "oxygen"])
++    def test_group_list_uses_standard_list_surface(self, qapp, theme: str) -> None:
++        load_theme(qapp, theme)
++
++        host = _ActivityDetailEditor()
++        activity = Activity(
++            id=1,
++            name="Test Activity",
++            description=None,
++            is_background=False,
++            is_archived=False,
++            groups=["Existing"],
++            tags=[],
++        )
++        host.load(activity)
++        host.resize(700, 500)
++        host.move(0, 0)
++        host.show()
++        _settle_ui(qapp)
++
++        dialog = AddGroupDialog(["Existing", "Alpha", "Beta", "Gamma"], activity.groups, host)
++        dialog.move(120, 80)
++        dialog.show()
++        dialog.raise_()
++        dialog.activateWindow()
++        _settle_ui(qapp)
++        try:
++            existing_list = dialog.findChild(QListWidget)
++            assert existing_list is not None
++            list_hex = _sample_screen_pixel(
++                dialog,
++                existing_list.viewport().mapToGlobal(
++                    QPoint(existing_list.viewport().width() - 12, existing_list.viewport().height() - 12)
++                ),
++            ).name().lower()
++            expected_hex = _THEME_PALETTE[theme]["bg-secondary"]
++            assert _perceptual_delta(expected_hex, list_hex) < 0.02, (
++                f"{theme}: add-group list no longer uses the standard list surface"
++            )
++        finally:
++            host.close()
++            host.deleteLater()
++            dialog.close()
++            dialog.deleteLater()
++            qapp.processEvents()
++
++    @pytest.mark.parametrize("theme", ["black", "oxygen", "dark", "light"])
++    def test_parented_dialog_border_differs_from_host_card(self, qapp, theme: str) -> None:
++        load_theme(qapp, theme)
++
++        host = _ActivityDetailEditor()
++        activity = Activity(
++            id=1,
++            name="Test Activity",
++            description=None,
++            is_background=False,
++            is_archived=False,
++            groups=["Existing"],
++            tags=[],
++        )
++        host.load(activity)
++        host.resize(700, 500)
++        host.move(0, 0)
++        host.show()
++        _settle_ui(qapp)
++
++        dialog = AddGroupDialog(["Existing", "Alpha", "Beta", "Gamma"], activity.groups, host)
++        dialog.move(120, 80)
++        dialog.show()
++        dialog.raise_()
++        dialog.activateWindow()
++        _settle_ui(qapp)
++
++        try:
++            # We want to ensure the 16px margin around the dialog is NOT pure black
++            # due to parented QWidget transparency bleed-through.
++            margin_point = dialog.mapToGlobal(QPoint(5, 5))
++            margin_hex = _sample_screen_pixel(dialog, margin_point).name().lower()
++
++            # The margin should blend with or be distinct from the host card, but definitely NOT pure black glitch
++            # Unless the host card itself is black (which is not true for any theme's bg-secondary except maybe black theme)
++            # Actually, black theme bg-secondary is #141414, which is not pure black #000000.
++            assert margin_hex != "#000000" or _THEME_PALETTE[theme]["bg-secondary"] == "#000000", (
++                f"{theme}: margin is pure black, likely due to transparent background glitch"
++            )
++
++            frame = dialog.findChild(QFrame, "dialogFrame")
++            assert frame is not None
++
++            # Sample the top edge, away from the rounded corners
++            border_point = frame.mapToGlobal(QPoint(frame.width() // 2, 0))
++            border_hex = _sample_screen_pixel(dialog, border_point).name().lower()
++
++            # Sample the margin just outside the frame, top center
++            margin_outside_frame_point = frame.mapToGlobal(QPoint(frame.width() // 2, -5))
++            margin_outside_frame_hex = _sample_screen_pixel(dialog, margin_outside_frame_point).name().lower()
++
++            assert _perceptual_delta(margin_outside_frame_hex, border_hex) >= 0.015, (
++                f"{theme}: parented dialog border is visually indistinguishable from its surrounding margin"
++            )
++        finally:
++            host.close()
++            host.deleteLater()
++            dialog.close()
++            dialog.deleteLater()
++            qapp.processEvents()
+diff --git a/uv.lock b/uv.lock
+index 713341f..9b04239 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -32,15 +32,6 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
+ ]
+ 
+-[[package]]
+-name = "comtypes"
+-version = "1.4.16"
+-source = { registry = "https://pypi.org/simple" }
+-sdist = { url = "https://files.pythonhosted.org/packages/c6/2a/65274c13327f637ec13af8d39f2cf579d9ebe7a0e683696b5f05236d2805/comtypes-1.4.16.tar.gz", hash = "sha256:cd66d1add01265cface4df51ba1e31cd1657e04463c281c802e737e79e1ba93c", size = 260252, upload-time = "2026-03-02T23:11:42.413Z" }
+-wheels = [
+-    { url = "https://files.pythonhosted.org/packages/5f/7c/0eb685107290b6221c03c46d39214a4e42a124189691cb83ae3228257f46/comtypes-1.4.16-py3-none-any.whl", hash = "sha256:e18d85179ff12955524c5a8c3bc09cb3c0d890f1da4d7123d14244c7b78f84c8", size = 296230, upload-time = "2026-03-02T23:11:41.049Z" },
+-]
+-
+ [[package]]
+ name = "flask"
+ version = "3.1.3"
+@@ -60,7 +51,7 @@ wheels = [
+ 
+ [[package]]
+ name = "grouper"
+-version = "1.1.0.9"
++version = "1.1.0.23"
+ source = { editable = "." }
+ dependencies = [
+     { name = "python-dateutil" },
+@@ -79,10 +70,7 @@ sync = [
+     { name = "zeroconf" },
+ ]
+ test = [
+-    { name = "mss" },
+-    { name = "psutil" },
+     { name = "pytest" },
+-    { name = "pywinauto", marker = "sys_platform == 'win32'" },
+     { name = "ruff" },
+     { name = "ty" },
+ ]
+@@ -97,12 +85,9 @@ web = [
+ requires-dist = [
+     { name = "flask", marker = "extra == 'server'", specifier = ">=3.0" },
+     { name = "flask", marker = "extra == 'web'", specifier = ">=3.0" },
+-    { name = "mss", marker = "extra == 'test'", specifier = ">=9.0" },
+-    { name = "psutil", marker = "extra == 'test'", specifier = ">=5.9" },
+     { name = "pyside6", marker = "extra == 'gui'", specifier = ">=6.6" },
+     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
+     { name = "python-dateutil", specifier = ">=2.9" },
+-    { name = "pywinauto", marker = "sys_platform == 'win32' and extra == 'test'", specifier = ">=0.6.8" },
+     { name = "ruff", marker = "extra == 'test'", specifier = ">=0.9" },
+     { name = "textual", marker = "extra == 'server'", specifier = ">=0.50" },
+     { name = "textual", marker = "extra == 'tui'", specifier = ">=0.50" },
+@@ -278,15 +263,6 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+ ]
+ 
+-[[package]]
+-name = "mss"
+-version = "10.1.0"
+-source = { registry = "https://pypi.org/simple" }
+-sdist = { url = "https://files.pythonhosted.org/packages/40/ca/49b67437a8c46d9732c9c274d7b1fc0c181cfe290d699a0c5e94701dfe79/mss-10.1.0.tar.gz", hash = "sha256:7182baf7ee16ca569e2804028b6ab9bcbf6be5c46fc2880840f33b513b9cb4f8", size = 84200, upload-time = "2025-08-16T12:11:00.119Z" }
+-wheels = [
+-    { url = "https://files.pythonhosted.org/packages/23/28/1e3e5cd1d677cca68b26166f704f72e35b1e8b6d5076d8ebeebc4e40a649/mss-10.1.0-py3-none-any.whl", hash = "sha256:9179c110cadfef5dc6dc4a041a0cd161c74c379218648e6640b48c6b5cfe8918", size = 24525, upload-time = "2025-08-16T12:10:59.111Z" },
+-]
+-
+ [[package]]
+ name = "packaging"
+ version = "26.0"
+@@ -314,34 +290,6 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
+ ]
+ 
+-[[package]]
+-name = "psutil"
+-version = "7.2.2"
+-source = { registry = "https://pypi.org/simple" }
+-sdist = { url = "https://files.pythonhosted.org/packages/aa/c6/d1ddf4abb55e93cebc4f2ed8b5d6dbad109ecb8d63748dd2b20ab5e57ebe/psutil-7.2.2.tar.gz", hash = "sha256:0746f5f8d406af344fd547f1c8daa5f5c33dbc293bb8d6a16d80b4bb88f59372", size = 493740, upload-time = "2026-01-28T18:14:54.428Z" }
+-wheels = [
+-    { url = "https://files.pythonhosted.org/packages/51/08/510cbdb69c25a96f4ae523f733cdc963ae654904e8db864c07585ef99875/psutil-7.2.2-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:2edccc433cbfa046b980b0df0171cd25bcaeb3a68fe9022db0979e7aa74a826b", size = 130595, upload-time = "2026-01-28T18:14:57.293Z" },
+-    { url = "https://files.pythonhosted.org/packages/d6/f5/97baea3fe7a5a9af7436301f85490905379b1c6f2dd51fe3ecf24b4c5fbf/psutil-7.2.2-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:e78c8603dcd9a04c7364f1a3e670cea95d51ee865e4efb3556a3a63adef958ea", size = 131082, upload-time = "2026-01-28T18:14:59.732Z" },
+-    { url = "https://files.pythonhosted.org/packages/37/d6/246513fbf9fa174af531f28412297dd05241d97a75911ac8febefa1a53c6/psutil-7.2.2-cp313-cp313t-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1a571f2330c966c62aeda00dd24620425d4b0cc86881c89861fbc04549e5dc63", size = 181476, upload-time = "2026-01-28T18:15:01.884Z" },
+-    { url = "https://files.pythonhosted.org/packages/b8/b5/9182c9af3836cca61696dabe4fd1304e17bc56cb62f17439e1154f225dd3/psutil-7.2.2-cp313-cp313t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:917e891983ca3c1887b4ef36447b1e0873e70c933afc831c6b6da078ba474312", size = 184062, upload-time = "2026-01-28T18:15:04.436Z" },
+-    { url = "https://files.pythonhosted.org/packages/16/ba/0756dca669f5a9300d0cbcbfae9a4c30e446dfc7440ffe43ded5724bfd93/psutil-7.2.2-cp313-cp313t-win_amd64.whl", hash = "sha256:ab486563df44c17f5173621c7b198955bd6b613fb87c71c161f827d3fb149a9b", size = 139893, upload-time = "2026-01-28T18:15:06.378Z" },
+-    { url = "https://files.pythonhosted.org/packages/1c/61/8fa0e26f33623b49949346de05ec1ddaad02ed8ba64af45f40a147dbfa97/psutil-7.2.2-cp313-cp313t-win_arm64.whl", hash = "sha256:ae0aefdd8796a7737eccea863f80f81e468a1e4cf14d926bd9b6f5f2d5f90ca9", size = 135589, upload-time = "2026-01-28T18:15:08.03Z" },
+-    { url = "https://files.pythonhosted.org/packages/81/69/ef179ab5ca24f32acc1dac0c247fd6a13b501fd5534dbae0e05a1c48b66d/psutil-7.2.2-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:eed63d3b4d62449571547b60578c5b2c4bcccc5387148db46e0c2313dad0ee00", size = 130664, upload-time = "2026-01-28T18:15:09.469Z" },
+-    { url = "https://files.pythonhosted.org/packages/7b/64/665248b557a236d3fa9efc378d60d95ef56dd0a490c2cd37dafc7660d4a9/psutil-7.2.2-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:7b6d09433a10592ce39b13d7be5a54fbac1d1228ed29abc880fb23df7cb694c9", size = 131087, upload-time = "2026-01-28T18:15:11.724Z" },
+-    { url = "https://files.pythonhosted.org/packages/d5/2e/e6782744700d6759ebce3043dcfa661fb61e2fb752b91cdeae9af12c2178/psutil-7.2.2-cp314-cp314t-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1fa4ecf83bcdf6e6c8f4449aff98eefb5d0604bf88cb883d7da3d8d2d909546a", size = 182383, upload-time = "2026-01-28T18:15:13.445Z" },
+-    { url = "https://files.pythonhosted.org/packages/57/49/0a41cefd10cb7505cdc04dab3eacf24c0c2cb158a998b8c7b1d27ee2c1f5/psutil-7.2.2-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e452c464a02e7dc7822a05d25db4cde564444a67e58539a00f929c51eddda0cf", size = 185210, upload-time = "2026-01-28T18:15:16.002Z" },
+-    { url = "https://files.pythonhosted.org/packages/dd/2c/ff9bfb544f283ba5f83ba725a3c5fec6d6b10b8f27ac1dc641c473dc390d/psutil-7.2.2-cp314-cp314t-win_amd64.whl", hash = "sha256:c7663d4e37f13e884d13994247449e9f8f574bc4655d509c3b95e9ec9e2b9dc1", size = 141228, upload-time = "2026-01-28T18:15:18.385Z" },
+-    { url = "https://files.pythonhosted.org/packages/f2/fc/f8d9c31db14fcec13748d373e668bc3bed94d9077dbc17fb0eebc073233c/psutil-7.2.2-cp314-cp314t-win_arm64.whl", hash = "sha256:11fe5a4f613759764e79c65cf11ebdf26e33d6dd34336f8a337aa2996d71c841", size = 136284, upload-time = "2026-01-28T18:15:19.912Z" },
+-    { url = "https://files.pythonhosted.org/packages/e7/36/5ee6e05c9bd427237b11b3937ad82bb8ad2752d72c6969314590dd0c2f6e/psutil-7.2.2-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:ed0cace939114f62738d808fdcecd4c869222507e266e574799e9c0faa17d486", size = 129090, upload-time = "2026-01-28T18:15:22.168Z" },
+-    { url = "https://files.pythonhosted.org/packages/80/c4/f5af4c1ca8c1eeb2e92ccca14ce8effdeec651d5ab6053c589b074eda6e1/psutil-7.2.2-cp36-abi3-macosx_11_0_arm64.whl", hash = "sha256:1a7b04c10f32cc88ab39cbf606e117fd74721c831c98a27dc04578deb0c16979", size = 129859, upload-time = "2026-01-28T18:15:23.795Z" },
+-    { url = "https://files.pythonhosted.org/packages/b5/70/5d8df3b09e25bce090399cf48e452d25c935ab72dad19406c77f4e828045/psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:076a2d2f923fd4821644f5ba89f059523da90dc9014e85f8e45a5774ca5bc6f9", size = 155560, upload-time = "2026-01-28T18:15:25.976Z" },
+-    { url = "https://files.pythonhosted.org/packages/63/65/37648c0c158dc222aba51c089eb3bdfa238e621674dc42d48706e639204f/psutil-7.2.2-cp36-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b0726cecd84f9474419d67252add4ac0cd9811b04d61123054b9fb6f57df6e9e", size = 156997, upload-time = "2026-01-28T18:15:27.794Z" },
+-    { url = "https://files.pythonhosted.org/packages/8e/13/125093eadae863ce03c6ffdbae9929430d116a246ef69866dad94da3bfbc/psutil-7.2.2-cp36-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:fd04ef36b4a6d599bbdb225dd1d3f51e00105f6d48a28f006da7f9822f2606d8", size = 148972, upload-time = "2026-01-28T18:15:29.342Z" },
+-    { url = "https://files.pythonhosted.org/packages/04/78/0acd37ca84ce3ddffaa92ef0f571e073faa6d8ff1f0559ab1272188ea2be/psutil-7.2.2-cp36-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:b58fabe35e80b264a4e3bb23e6b96f9e45a3df7fb7eed419ac0e5947c61e47cc", size = 148266, upload-time = "2026-01-28T18:15:31.597Z" },
+-    { url = "https://files.pythonhosted.org/packages/b4/90/e2159492b5426be0c1fef7acba807a03511f97c5f86b3caeda6ad92351a7/psutil-7.2.2-cp37-abi3-win_amd64.whl", hash = "sha256:eb7e81434c8d223ec4a219b5fc1c47d0417b12be7ea866e24fb5ad6e84b3d988", size = 137737, upload-time = "2026-01-28T18:15:33.849Z" },
+-    { url = "https://files.pythonhosted.org/packages/8c/c7/7bb2e321574b10df20cbde462a94e2b71d05f9bbda251ef27d104668306a/psutil-7.2.2-cp37-abi3-win_arm64.whl", hash = "sha256:8c233660f575a5a89e6d4cb65d9f938126312bca76d8fe087b947b3a1aaac9ee", size = 134617, upload-time = "2026-01-28T18:15:36.514Z" },
+-]
+-
+ [[package]]
+ name = "pygments"
+ version = "2.19.2"
+@@ -427,39 +375,6 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427", size = 229892, upload-time = "2024-03-01T18:36:18.57Z" },
+ ]
+ 
+-[[package]]
+-name = "pywin32"
+-version = "311"
+-source = { registry = "https://pypi.org/simple" }
+-wheels = [
+-    { url = "https://files.pythonhosted.org/packages/7c/af/449a6a91e5d6db51420875c54f6aff7c97a86a3b13a0b4f1a5c13b988de3/pywin32-311-cp311-cp311-win32.whl", hash = "sha256:184eb5e436dea364dcd3d2316d577d625c0351bf237c4e9a5fabbcfa5a58b151", size = 8697031, upload-time = "2025-07-14T20:13:13.266Z" },
+-    { url = "https://files.pythonhosted.org/packages/51/8f/9bb81dd5bb77d22243d33c8397f09377056d5c687aa6d4042bea7fbf8364/pywin32-311-cp311-cp311-win_amd64.whl", hash = "sha256:3ce80b34b22b17ccbd937a6e78e7225d80c52f5ab9940fe0506a1a16f3dab503", size = 9508308, upload-time = "2025-07-14T20:13:15.147Z" },
+-    { url = "https://files.pythonhosted.org/packages/44/7b/9c2ab54f74a138c491aba1b1cd0795ba61f144c711daea84a88b63dc0f6c/pywin32-311-cp311-cp311-win_arm64.whl", hash = "sha256:a733f1388e1a842abb67ffa8e7aad0e70ac519e09b0f6a784e65a136ec7cefd2", size = 8703930, upload-time = "2025-07-14T20:13:16.945Z" },
+-    { url = "https://files.pythonhosted.org/packages/e7/ab/01ea1943d4eba0f850c3c61e78e8dd59757ff815ff3ccd0a84de5f541f42/pywin32-311-cp312-cp312-win32.whl", hash = "sha256:750ec6e621af2b948540032557b10a2d43b0cee2ae9758c54154d711cc852d31", size = 8706543, upload-time = "2025-07-14T20:13:20.765Z" },
+-    { url = "https://files.pythonhosted.org/packages/d1/a8/a0e8d07d4d051ec7502cd58b291ec98dcc0c3fff027caad0470b72cfcc2f/pywin32-311-cp312-cp312-win_amd64.whl", hash = "sha256:b8c095edad5c211ff31c05223658e71bf7116daa0ecf3ad85f3201ea3190d067", size = 9495040, upload-time = "2025-07-14T20:13:22.543Z" },
+-    { url = "https://files.pythonhosted.org/packages/ba/3a/2ae996277b4b50f17d61f0603efd8253cb2d79cc7ae159468007b586396d/pywin32-311-cp312-cp312-win_arm64.whl", hash = "sha256:e286f46a9a39c4a18b319c28f59b61de793654af2f395c102b4f819e584b5852", size = 8710102, upload-time = "2025-07-14T20:13:24.682Z" },
+-    { url = "https://files.pythonhosted.org/packages/a5/be/3fd5de0979fcb3994bfee0d65ed8ca9506a8a1260651b86174f6a86f52b3/pywin32-311-cp313-cp313-win32.whl", hash = "sha256:f95ba5a847cba10dd8c4d8fefa9f2a6cf283b8b88ed6178fa8a6c1ab16054d0d", size = 8705700, upload-time = "2025-07-14T20:13:26.471Z" },
+-    { url = "https://files.pythonhosted.org/packages/e3/28/e0a1909523c6890208295a29e05c2adb2126364e289826c0a8bc7297bd5c/pywin32-311-cp313-cp313-win_amd64.whl", hash = "sha256:718a38f7e5b058e76aee1c56ddd06908116d35147e133427e59a3983f703a20d", size = 9494700, upload-time = "2025-07-14T20:13:28.243Z" },
+-    { url = "https://files.pythonhosted.org/packages/04/bf/90339ac0f55726dce7d794e6d79a18a91265bdf3aa70b6b9ca52f35e022a/pywin32-311-cp313-cp313-win_arm64.whl", hash = "sha256:7b4075d959648406202d92a2310cb990fea19b535c7f4a78d3f5e10b926eeb8a", size = 8709318, upload-time = "2025-07-14T20:13:30.348Z" },
+-    { url = "https://files.pythonhosted.org/packages/c9/31/097f2e132c4f16d99a22bfb777e0fd88bd8e1c634304e102f313af69ace5/pywin32-311-cp314-cp314-win32.whl", hash = "sha256:b7a2c10b93f8986666d0c803ee19b5990885872a7de910fc460f9b0c2fbf92ee", size = 8840714, upload-time = "2025-07-14T20:13:32.449Z" },
+-    { url = "https://files.pythonhosted.org/packages/90/4b/07c77d8ba0e01349358082713400435347df8426208171ce297da32c313d/pywin32-311-cp314-cp314-win_amd64.whl", hash = "sha256:3aca44c046bd2ed8c90de9cb8427f581c479e594e99b5c0bb19b29c10fd6cb87", size = 9656800, upload-time = "2025-07-14T20:13:34.312Z" },
+-    { url = "https://files.pythonhosted.org/packages/c0/d2/21af5c535501a7233e734b8af901574572da66fcc254cb35d0609c9080dd/pywin32-311-cp314-cp314-win_arm64.whl", hash = "sha256:a508e2d9025764a8270f93111a970e1d0fbfc33f4153b388bb649b7eec4f9b42", size = 8932540, upload-time = "2025-07-14T20:13:36.379Z" },
+-]
+-
+-[[package]]
+-name = "pywinauto"
+-version = "0.6.9"
+-source = { registry = "https://pypi.org/simple" }
+-dependencies = [
+-    { name = "comtypes", marker = "sys_platform == 'win32'" },
+-    { name = "pywin32", marker = "sys_platform == 'win32'" },
+-    { name = "six" },
+-]
+-sdist = { url = "https://files.pythonhosted.org/packages/2c/85/cc65e3b64e7473cc86c07f0b5c415d509402c03ef19dadc39c583835eb5f/pywinauto-0.6.9.tar.gz", hash = "sha256:94d710bfa796df245250f952ffa65d97233d9807bcd42e052b71b81af469b6de", size = 434734, upload-time = "2025-01-06T11:30:01.801Z" }
+-wheels = [
+-    { url = "https://files.pythonhosted.org/packages/44/46/f2283648e0c237af451dc50ebc42121abfd198d12391fd9ad4df1c6b97d2/pywinauto-0.6.9-py2.py3-none-any.whl", hash = "sha256:5924b3072864a1d730c5546bbeb17cf4063ba518b618dbc5e43c18276c7c9356", size = 363041, upload-time = "2025-01-06T11:29:55.586Z" },
+-]
+-
+ [[package]]
+ name = "rich"
+ version = "14.3.3"

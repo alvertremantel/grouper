@@ -82,7 +82,7 @@ QMainWindow::separator {
 
 /* == Dialog Title Bar ====================================================== */
 
-#dialogTitleBar {
+#dialogTitleBar, #card #dialogTitleBar {
     background-color: {{dialog-title-bg}};
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
@@ -114,13 +114,13 @@ QMainWindow::separator {
 
 /* == Dialog Frame ========================================================== */
 
-#dialogFrame {
+#dialogFrame, #card #dialogFrame {
     background-color: {{dialog-bg}};
     border: 1px solid {{dialog-border}};
     border-radius: 10px;
 }
 
-#dialogContent {
+#dialogContent, #card #dialogContent {
     background-color: {{dialog-content-bg}};
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
@@ -128,13 +128,18 @@ QMainWindow::separator {
 
 #dialogContent QListWidget,
 #dialogContent QListView,
-#dialogContent QComboBox QAbstractItemView {
+#dialogContent QComboBox QAbstractItemView,
+#card #dialogContent QListWidget,
+#card #dialogContent QListView,
+#card #dialogContent QComboBox QAbstractItemView {
     background-color: {{bg-secondary}};
     border: 1px solid {{border}};
 }
 
 #dialogContent QListWidget QWidget,
-#dialogContent QListView QWidget {
+#dialogContent QListView QWidget,
+#card #dialogContent QListWidget QWidget,
+#card #dialogContent QListView QWidget {
     background-color: {{bg-secondary}};
 }
 
@@ -195,36 +200,6 @@ QMainWindow::separator {
 
 /* Parent-card transparency should not bleed into parented frameless dialogs. */
 #card QDialog {
-    background-color: {{bg-secondary}};
-}
-
-#card #dialogFrame {
-    background-color: {{dialog-bg}};
-    border: 1px solid {{dialog-border}};
-    border-radius: 10px;
-}
-
-#card #dialogTitleBar {
-    background-color: {{dialog-title-bg}};
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-}
-
-#card #dialogContent {
-    background-color: {{dialog-content-bg}};
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-}
-
-#card #dialogContent QListWidget,
-#card #dialogContent QListView,
-#card #dialogContent QComboBox QAbstractItemView {
-    background-color: {{bg-secondary}};
-    border: 1px solid {{border}};
-}
-
-#card #dialogContent QListWidget QWidget,
-#card #dialogContent QListView QWidget {
     background-color: {{bg-secondary}};
 }
 

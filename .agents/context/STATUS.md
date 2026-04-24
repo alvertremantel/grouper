@@ -8,6 +8,8 @@
 - About page uses GitHub links and GitHub Releases for version checks.
 - DRM / activation code has been removed.
 - Shared frameless dialogs no longer rely on top-level translucency.
+- Dialog surface tokens exist for all themes; `#card`-scoped QSS selectors prevent parent-card transparency bleed-through.
+- E2E pywinauto tests have been removed and replaced with fast widget tests.
 
 ## Recent High-Value Changes
 
@@ -18,17 +20,18 @@
 - Reworked dialog contrast coverage to test the real parented dialog context.
 - Added dialog surface tokens and dialog-scoped list styling for low-contrast themes.
 - Documented the dialog investigation in `.agents/context/qt-pitfalls.md`.
+- Removed `WA_TranslucentBackground` from `FramelessDialog`; replaced with `WA_StyledBackground` on container, title bar, and content.
+- Consolidated `#card` dialog QSS selectors into base rules to reduce duplication.
+- Added warning log when `EditTaskDialog` encounters a prerequisite task with a missing `id`.
 
 ## Active Work
 
-- Draft black-theme `AddGroupDialog` fix is in place: dialog translucency remains disabled, black dialog tokens are restored to standard black theme surfaces, and dialog list rows no longer use the rough blocky override from `example-2.png`.
-- Known remaining visual issue: borders around the parent card/dialog card area still read black or insufficiently distinct in the live black-theme view. Handle this in a new follow-up session.
-- A follow-up session should review the live screenshot and refine card/dialog border contrast without reintroducing top-level translucency or blocky list-item styling.
+- Known remaining visual issue: the black-theme dialog title bar is perceptually too close to the plain page background in the free-floating (non-parented) dialog case. The `test_dialog_chrome_differs_from_plain_page[black]` test currently fails with a delta of ~0.008 vs. the required 0.015. A follow-up session should either lighten the black dialog title bar or darken the black page background to restore perceptual separation.
+- Dialog translucency and blocky list-item styling should remain disabled.
 
 ## Verification Snapshot
 
 - Unit and widget coverage was expanded substantially around installer behavior.
 - Prior verification on recent work was clean for `pytest`, `ruff`, and most `ty` checks, with only previously-known type noise noted at the time.
-- Recent focused verification was clean for `tests/widget/test_transparency.py`, `test_theme_validation.py`, `test_theme_load.py`, and `test_dialogs.py`.
-- Current dialog-focused verification is clean: `uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py` and `uv run ruff check .`.
+- Recent focused verification is clean: `uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py` and `uv run ruff check .`.
 - Full `uv run pytest` reached 99% with printed tests passing but hit the tool timeout; the remaining transparency cases were run separately and passed.
