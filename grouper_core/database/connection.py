@@ -17,6 +17,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import grouper_core.config as config
+
 logger = logging.getLogger(__name__)
 
 
@@ -54,8 +56,6 @@ def register_sqlite_functions(conn: sqlite3.Connection) -> None:
 # ---------------------------------------------------------------------------
 
 DEFAULT_DATA_DIR = Path.home() / ".grouper"
-CONFIG_DIR = Path.home() / ".grouper"
-CONFIG_FILE = CONFIG_DIR / "db_path.txt"
 
 DATA_DIR: Path = DEFAULT_DATA_DIR
 DATABASE_PATH: Path = DEFAULT_DATA_DIR / "grouper.db"
@@ -68,21 +68,22 @@ def _load_data_directory() -> Path:
         p = Path(env_override)
         p.mkdir(parents=True, exist_ok=True)
         return p
-    if CONFIG_FILE.exists():
+    config_file = config.APP_DIR / "db_path.txt"
+    if config_file.exists():
         try:
-            p = Path(CONFIG_FILE.read_text().strip())
+            p = Path(config_file.read_text().strip())
             if p.exists() and p.is_dir():
                 return p
         except Exception:
             logger.warning(
-                "Failed to read data directory config from %s", CONFIG_FILE, exc_info=True
+                "Failed to read data directory config from %s", config_file, exc_info=True
             )
     return DEFAULT_DATA_DIR
 
 
 def _save_data_directory(path: Path) -> None:
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    CONFIG_FILE.write_text(str(path))
+    config.APP_DIR.mkdir(parents=True, exist_ok=True)
+    (config.APP_DIR / "db_path.txt").write_text(str(path))
 
 
 def _init_paths() -> None:

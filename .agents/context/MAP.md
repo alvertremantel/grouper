@@ -15,6 +15,9 @@
 
 - `grouper/main.py`: desktop startup
 - `grouper/app.py`: main window
+- `grouper/config.py`: desktop compatibility re-export of `grouper_core.config`
+- `grouper_core/config.py`: shared config paths and `ConfigManager`
+- `grouper_core/database/connection.py`: database path initialization and `db_path.txt` persistence
 - `grouper_cli/__main__.py`: CLI entry
 - `grouper_server/__main__.py`: server entry
 - `grouper_install/setup.py`: installer UI and install/uninstall flow
@@ -29,13 +32,15 @@
 - `grouper_install/manifest.py`: install manifest persistence
 - `grouper_install/registry.py`: ARP uninstall registration
 
-## Test Buckets
+## Test Infrastructure
 
+- `tests/conftest.py`: root autouse fixture isolating both DB and config paths per test
 - `tests/unit/`: fast logic tests
 - `tests/widget/`: Qt widget tests
 - `tests/cli/`: CLI tests
 - `tests/integration/`: cross-module tests
-- ~~`tests/e2e/`~~: removed; coverage replaced by faster widget tests
+- `tests/unit/test_test_isolation.py`: regression tests proving sandboxing stays intact
+- `tests/unit/sync/test_sync_entrypoint_import.py`: sync entrypoint import purity checks
 
 ## Dialog / Theme Hotspots
 
