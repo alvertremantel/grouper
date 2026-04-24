@@ -330,21 +330,31 @@ class TestAddGroupDialogContrast:
         _settle_ui(qapp)
 
         try:
+            # We want to ensure the 16px margin around the dialog is NOT pure black
+            # due to parented QWidget transparency bleed-through.
+            margin_point = dialog.mapToGlobal(QPoint(5, 5))
+            margin_hex = _sample_screen_pixel(dialog, margin_point).name().lower()
+
+            # The margin should blend with or be distinct from the host card, but definitely NOT pure black glitch
+            # Unless the host card itself is black (which is not true for any theme's bg-secondary except maybe black theme)
+            # Actually, black theme bg-secondary is #141414, which is not pure black #000000.
+            assert margin_hex != "#000000" or _THEME_PALETTE[theme]["bg-secondary"] == "#000000", (
+                f"{theme}: margin is pure black, likely due to transparent background glitch"
+            )
+
             frame = dialog.findChild(QFrame, "dialogFrame")
             assert frame is not None
 
-            # Sample near the top left corner of the border area
-            # A little further in to make sure we hit the border
-            border_point = frame.mapToGlobal(QPoint(10, 10))
-
-            # The top left is the title bar, so we sample the background card behind it
-            host_point = frame.mapToGlobal(QPoint(-20, -20))
-
+            # Sample the top edge, away from the rounded corners
+            border_point = frame.mapToGlobal(QPoint(frame.width() // 2, 0))
             border_hex = _sample_screen_pixel(dialog, border_point).name().lower()
-            host_hex = _sample_screen_pixel(host, host_point).name().lower()
 
-            assert _perceptual_delta(host_hex, border_hex) >= 0.015, (
-                f"{theme}: parented dialog border is visually indistinguishable from host card"
+            # Sample the margin just outside the frame, top center
+            margin_outside_frame_point = frame.mapToGlobal(QPoint(frame.width() // 2, -5))
+            margin_outside_frame_hex = _sample_screen_pixel(dialog, margin_outside_frame_point).name().lower()
+
+            assert _perceptual_delta(margin_outside_frame_hex, border_hex) >= 0.015, (
+                f"{theme}: parented dialog border is visually indistinguishable from its surrounding margin"
             )
         finally:
             host.close()

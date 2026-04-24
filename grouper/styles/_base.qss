@@ -194,6 +194,10 @@ QMainWindow::separator {
 }
 
 /* Parent-card transparency should not bleed into parented frameless dialogs. */
+#card QDialog {
+    background-color: {{bg-secondary}};
+}
+
 #card #dialogFrame {
     background-color: {{dialog-bg}};
     border: 1px solid {{dialog-border}};
