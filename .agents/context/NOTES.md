@@ -38,6 +38,8 @@ uv run ruff check .
 - Frameless top-level dialog translucency is suspect on this app; do not assume offscreen widget colors match on-screen composition.
 - `AddGroupDialog` is visually dominated by its inner `QListWidget`, not just the outer dialog frame.
 - For the black theme, `AddGroupDialog` should keep the standard black dialog surfaces; do not bring back the oversized solid list-row override from `example-2.png`.
+- Summary trend bar low-end colors should use real palette surface tokens such as `bg-secondary`, not ad-hoc nonexistent aliases.
+- Black dialog body/content should stay on `bg-primary`; the title bar may use `bg-tertiary` for perceptible non-parented chrome contrast.
 - Parent card selectors such as `#card QWidget { background-color: transparent; }` can bleed into parented dialogs; dialog selectors need enough specificity to preserve painted surfaces.
 - When writing QSS for dialogs that may appear inside `#card`, group `#card` variants with the base selector (e.g., `#dialogFrame, #card #dialogFrame`) instead of duplicating the entire block.
 - See `.agents/context/qt-pitfalls.md` for the full dialog-contrast postmortem.

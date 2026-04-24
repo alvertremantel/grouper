@@ -23,6 +23,7 @@
 - `grouper_install/setup.py`: installer UI and install/uninstall flow
 - `grouper/ui/dialogs.py`: shared frameless dialogs and dialog base behavior
 - `grouper/ui/activity_config.py`: activity editor flow that launches `AddGroupDialog`
+- `grouper/ui/summary.py`: Summary tab stats and `MiniBarTrend` daily trend chart
 
 ## Installer Modules
 
@@ -49,5 +50,6 @@
 - `tests/widget/test_transparency.py`: dialog contrast regressions, including parented dialog checks
 - `tests/widget/test_theme_validation.py`: token coverage for dialog surface palette entries
 - `tests/widget/test_dialogs.py`: construction tests for all `FramelessDialog` subclasses
+- `tests/widget/test_summary_stats.py`: Summary calculations and trend-bar theme-switch regressions
 - `tests/widget/test_activity_config.py`: rename persistence via `editingFinished` signal
 - `.agents/context/qt-pitfalls.md`: lessons learned from the dialog contrast investigation

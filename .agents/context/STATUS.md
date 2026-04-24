@@ -9,7 +9,8 @@
 
 ## Recent Changes
 
-- **Summary bars**: recompute `MiniBarTrend` colors on `QEvent.PaletteChange` for theme switches.
+- **Summary bars**: recompute `MiniBarTrend` colors on `QEvent.PaletteChange`; zero-value trend bars now blend from active `bg-secondary` instead of a nonexistent `card_bg` fallback, covering DARK to SAGE switches with mixed zero/nonzero days.
+- **Black dialogs**: black-theme dialog title bar now uses the existing tertiary black surface so non-parented dialog chrome remains perceptibly distinct from the page while body/content stay on standard black surfaces.
 - **Activity renames**: `editingFinished` signal (not `returnPressed`) for both `_ActivityDetailEditor` and `_GroupSection`; empty renames revert UI. Covered by `test_activity_config.py`.
 - **Test isolation**: conftest patches `grouper_core.config`, re-exported `grouper.config`, and `ConfigManager._instance` **before** calling `_init_paths()` so `_save_data_directory()` always writes to the temp dir. `db_path.txt` routed through `APP_DIR`. Regression tests in `test_test_isolation.py` and `test_sync_entrypoint_import.py`.
 - **Dialog QSS**: consolidated `#card` selectors into base rules; `EditTaskDialog` warns on missing prereq `id`.
@@ -17,9 +18,8 @@
 
 ## Active Work
 
-- Black-theme dialog title bar still perceptually close to page background in non-parented case; regression test now passes.
 - Dialog translucency and blocky list-item styling must remain disabled.
 
 ## Verification
 
-- `ruff check .` clean. `pytest` 530/531 (1 pre-existing `win32com` import failure). Pre-existing `ty` noise unrelated to recent changes.
+- `ruff check .` clean. Split pytest chunks pass: CLI, integration, unit core/db/sync/top-level, and widget groups. `ty check .` still reports pre-existing broad test/model nullability and Qt-stub diagnostics unrelated to the Summary/theme changes.

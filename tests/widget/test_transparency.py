@@ -165,7 +165,7 @@ class TestPaletteContrastForDialogs:
         colors = _THEME_PALETTE["black"]
         assert colors["dialog-bg"] == colors["bg-primary"]
         assert colors["dialog-content-bg"] == colors["bg-primary"]
-        assert colors["dialog-title-bg"] == colors["bg-secondary"]
+        assert colors["dialog-title-bg"] == colors["bg-tertiary"]
         assert colors["dialog-border"] == colors["border"]
 
     def test_border_differs_from_bg_primary(self) -> None:

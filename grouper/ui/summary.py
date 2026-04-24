@@ -201,32 +201,31 @@ class _TrendBar(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setObjectName("summaryTrendCol")
-        col_layout = QVBoxLayout(self)
-        col_layout.setContentsMargins(0, 0, 0, 0)
-        col_layout.setSpacing(0)
+        self._col_layout = QVBoxLayout(self)
+        self._col_layout.setContentsMargins(0, 0, 0, 0)
+        self._col_layout.setSpacing(0)
 
         self._spacer = QWidget()
         self._spacer.setObjectName("summaryTrendSpacer")
         self._spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        col_layout.addWidget(self._spacer)
+        self._col_layout.addWidget(self._spacer)
 
         self._bar = QFrame()
         self._bar.setObjectName("summaryTrendBar")
         self._bar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._bar.setMinimumHeight(4)
-        col_layout.addWidget(self._bar)
+        self._col_layout.addWidget(self._bar)
 
         self._day_lbl = QLabel()
         self._day_lbl.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._day_lbl.setObjectName("smallMuted")
         self._day_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        col_layout.addWidget(self._day_lbl)
+        self._col_layout.addWidget(self._day_lbl)
 
     def populate(self, day_label: str, val: float, max_val: float, color_hex: str = "") -> None:
         ratio = max(self.MIN_BAR_FRACTION, val / max(max_val, 1.0))
-        col_layout = self.layout()
-        col_layout.setStretch(0, round((1.0 - ratio) * 1000))
-        col_layout.setStretch(1, round(ratio * 1000))
+        self._col_layout.setStretch(0, round((1.0 - ratio) * 1000))
+        self._col_layout.setStretch(1, round(ratio * 1000))
         if color_hex:
             self._bar.setStyleSheet(f"background-color: {color_hex}; border-radius: 2px;")
         self._day_lbl.setText(day_label)
@@ -266,7 +265,7 @@ class MiniBarTrend(QWidget):
         self._bar_width = bar_width
         max_val = max((v for _, v in days), default=1.0) or 1.0
         colors = theme_colors(get_config().theme)
-        card_bg = colors.get("card_bg", "#24263a")
+        card_bg = colors["bg-secondary"]
         accent = colors["accent"]
         gap = 2 if bar_width >= 10 else 1
         self._bars_row.setSpacing(gap)

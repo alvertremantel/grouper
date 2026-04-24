@@ -665,7 +665,7 @@ _DIALOG_SURFACE_TOKENS: dict[str, dict[str, str]] = {
     "black": {
         "dialog-bg": "#0a0a0a",
         "dialog-content-bg": "#0a0a0a",
-        "dialog-title-bg": "#141414",
+        "dialog-title-bg": "#1e1e1e",
         "dialog-border": "#2a2a2a",
     },
     "sage": {
