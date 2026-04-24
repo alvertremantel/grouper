@@ -23,6 +23,11 @@
 - `grouper_install/setup.py`: installer UI and install/uninstall flow
 - `grouper/ui/dialogs.py`: shared frameless dialogs and dialog base behavior
 - `grouper/ui/activity_config.py`: activity editor flow that launches `AddGroupDialog`
+- `grouper/ui/animated_stack.py`: page and inner-panel slide transitions
+- `grouper/ui/animated_card.py`: session card expand/collapse and pause/resume slide helpers
+- `grouper/ui/task_board.py`: task card expand/collapse and board/task-panel transitions
+- `grouper/ui/splash.py`: startup splash/spinner animation
+- `grouper/ui/activity_week.py`: dashboard activity-week grid and active-session pulse
 
 ## Installer Modules
 
@@ -41,6 +46,9 @@
 - `tests/integration/`: cross-module tests
 - `tests/unit/test_test_isolation.py`: regression tests proving sandboxing stays intact
 - `tests/unit/sync/test_sync_entrypoint_import.py`: sync entrypoint import purity checks
+- `tests/widget/test_animated_stack.py`: slide transition behavior
+- `tests/widget/test_activity_week.py`: activity-week layout and pulse behavior
+- `tests/widget/test_task_board_drag.py`: task card interactions and board drag/drop behavior
 
 ## Dialog / Theme Hotspots
 

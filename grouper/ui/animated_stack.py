@@ -41,7 +41,7 @@ class AnimatedViewStack(QWidget):
     """
 
     currentChanged = Signal(int)
-    DURATION = 300  # ms
+    DURATION = 200  # ms
 
     def __init__(
         self,
