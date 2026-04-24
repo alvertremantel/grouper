@@ -301,3 +301,54 @@ class TestAddGroupDialogContrast:
             dialog.close()
             dialog.deleteLater()
             qapp.processEvents()
+
+    @pytest.mark.parametrize("theme", ["black", "oxygen", "dark", "light"])
+    def test_parented_dialog_border_differs_from_host_card(self, qapp, theme: str) -> None:
+        load_theme(qapp, theme)
+
+        host = _ActivityDetailEditor()
+        activity = Activity(
+            id=1,
+            name="Test Activity",
+            description=None,
+            is_background=False,
+            is_archived=False,
+            groups=["Existing"],
+            tags=[],
+        )
+        host.load(activity)
+        host.resize(700, 500)
+        host.move(0, 0)
+        host.show()
+        _settle_ui(qapp)
+
+        dialog = AddGroupDialog(["Existing", "Alpha", "Beta", "Gamma"], activity.groups, host)
+        dialog.move(120, 80)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        _settle_ui(qapp)
+
+        try:
+            frame = dialog.findChild(QFrame, "dialogFrame")
+            assert frame is not None
+
+            # Sample near the top left corner of the border area
+            # A little further in to make sure we hit the border
+            border_point = frame.mapToGlobal(QPoint(10, 10))
+
+            # The top left is the title bar, so we sample the background card behind it
+            host_point = frame.mapToGlobal(QPoint(-20, -20))
+
+            border_hex = _sample_screen_pixel(dialog, border_point).name().lower()
+            host_hex = _sample_screen_pixel(host, host_point).name().lower()
+
+            assert _perceptual_delta(host_hex, border_hex) >= 0.015, (
+                f"{theme}: parented dialog border is visually indistinguishable from host card"
+            )
+        finally:
+            host.close()
+            host.deleteLater()
+            dialog.close()
+            dialog.deleteLater()
+            qapp.processEvents()

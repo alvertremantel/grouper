@@ -197,14 +197,19 @@ QMainWindow::separator {
 #card #dialogFrame {
     background-color: {{dialog-bg}};
     border: 1px solid {{dialog-border}};
+    border-radius: 10px;
 }
 
 #card #dialogTitleBar {
     background-color: {{dialog-title-bg}};
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
 
 #card #dialogContent {
     background-color: {{dialog-content-bg}};
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
 }
 
 #card #dialogContent QListWidget,
