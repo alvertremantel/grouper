@@ -73,3 +73,51 @@ class TestActivityRenameOnEditingFinished:
         refreshed = get_activity_by_id(activity.id)
         assert refreshed is not None
         assert refreshed.name == "Real Name"
+        assert editor._name_input.text() == "Real Name"
+
+
+class TestGroupSectionRename:
+    def test_group_section_editing_finished_persists_rename(self, qapp: QApplication) -> None:
+        from grouper.database.activities import create_group, list_all_groups
+        create_group("Original Group")
+        group = next(g for g in list_all_groups() if g.name == "Original Group")
+
+        from grouper.ui.activity_config import _GroupSection
+        section = _GroupSection(group)
+        section.show()
+        qapp.processEvents()
+
+        section._start_rename()
+        assert not section._name_label.isVisible()
+        assert section._name_input.isVisible()
+
+        section._name_input.setText("Renamed Group")
+        section._name_input.editingFinished.emit()
+
+        assert not section._name_input.isVisible()
+        assert section._name_label.isVisible()
+        assert section._name_label.text() == "Renamed Group"
+
+        refreshed = next(g for g in list_all_groups() if g.id == group.id)
+        assert refreshed.name == "Renamed Group"
+
+    def test_group_section_empty_rename_aborts(self, qapp: QApplication) -> None:
+        from grouper.database.activities import create_group, list_all_groups
+        create_group("Stable Group")
+        group = next(g for g in list_all_groups() if g.name == "Stable Group")
+
+        from grouper.ui.activity_config import _GroupSection
+        section = _GroupSection(group)
+        section.show()
+        qapp.processEvents()
+
+        section._start_rename()
+        section._name_input.setText("   ")
+        section._name_input.editingFinished.emit()
+
+        assert not section._name_input.isVisible()
+        assert section._name_label.isVisible()
+        assert section._name_label.text() == "Stable Group"
+
+        refreshed = next(g for g in list_all_groups() if g.id == group.id)
+        assert refreshed.name == "Stable Group"
