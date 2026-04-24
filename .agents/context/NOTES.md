@@ -33,6 +33,8 @@ uv run ruff check .
 - For Qt visual bugs, prefer testing the exact shown widget hierarchy over `widget.grab()` alone.
 - Frameless top-level dialog translucency is suspect on this app; do not assume offscreen widget colors match on-screen composition.
 - `AddGroupDialog` is visually dominated by its inner `QListWidget`, not just the outer dialog frame.
+- For the black theme, `AddGroupDialog` should keep the standard black dialog surfaces; do not bring back the oversized solid list-row override from `example-2.png`.
+- Parent card selectors such as `#card QWidget { background-color: transparent; }` can bleed into parented dialogs; dialog selectors need enough specificity to preserve painted surfaces.
 - See `.agents/context/qt-pitfalls.md` for the full dialog-contrast postmortem.
 
 ## Installer Notes

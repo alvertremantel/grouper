@@ -649,6 +649,60 @@ _THEME_PALETTE: dict[str, dict[str, str]] = {
     },
 }
 
+_DIALOG_SURFACE_TOKENS: dict[str, dict[str, str]] = {
+    "dark": {
+        "dialog-bg": "#2f3146",
+        "dialog-content-bg": "#2f3146",
+        "dialog-title-bg": "#3b3d57",
+        "dialog-border": "#565f89",
+    },
+    "light": {
+        "dialog-bg": "#ffffff",
+        "dialog-content-bg": "#ececf0",
+        "dialog-title-bg": "#e2e2e8",
+        "dialog-border": "#c7c7cc",
+    },
+    "black": {
+        "dialog-bg": "#0a0a0a",
+        "dialog-content-bg": "#0a0a0a",
+        "dialog-title-bg": "#141414",
+        "dialog-border": "#2a2a2a",
+    },
+    "sage": {
+        "dialog-bg": "#4a5d4c",
+        "dialog-content-bg": "#4a5d4c",
+        "dialog-title-bg": "#5a6d5c",
+        "dialog-border": "#6a7d6c",
+    },
+    "cathode": {
+        "dialog-bg": "#172517",
+        "dialog-content-bg": "#1a2c1a",
+        "dialog-title-bg": "#1f381f",
+        "dialog-border": "#2f6a38",
+    },
+    "argon": {
+        "dialog-bg": "#261b3d",
+        "dialog-content-bg": "#2d2048",
+        "dialog-title-bg": "#352655",
+        "dialog-border": "#5a4070",
+    },
+    "sodium": {
+        "dialog-bg": "#323022",
+        "dialog-content-bg": "#383626",
+        "dialog-title-bg": "#3e3c29",
+        "dialog-border": "#706050",
+    },
+    "oxygen": {
+        "dialog-bg": "#442020",
+        "dialog-content-bg": "#502626",
+        "dialog-title-bg": "#5c2c2c",
+        "dialog-border": "#864444",
+    },
+}
+
+for _theme_name, _tokens in _DIALOG_SURFACE_TOKENS.items():
+    _THEME_PALETTE[_theme_name].update(_tokens)
+
 
 # ---------------------------------------------------------------------------
 #  Public API

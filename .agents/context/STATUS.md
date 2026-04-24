@@ -21,11 +21,14 @@
 
 ## Active Work
 
-- The black-theme `AddGroupDialog` is technically visible again, but the current result is still visually rough.
-- A follow-up session should review the live screenshot and refine dialog width/body composition without reintroducing translucency.
+- Draft black-theme `AddGroupDialog` fix is in place: dialog translucency remains disabled, black dialog tokens are restored to standard black theme surfaces, and dialog list rows no longer use the rough blocky override from `example-2.png`.
+- Known remaining visual issue: borders around the parent card/dialog card area still read black or insufficiently distinct in the live black-theme view. Handle this in a new follow-up session.
+- A follow-up session should review the live screenshot and refine card/dialog border contrast without reintroducing top-level translucency or blocky list-item styling.
 
 ## Verification Snapshot
 
 - Unit and widget coverage was expanded substantially around installer behavior.
 - Prior verification on recent work was clean for `pytest`, `ruff`, and most `ty` checks, with only previously-known type noise noted at the time.
 - Recent focused verification was clean for `tests/widget/test_transparency.py`, `test_theme_validation.py`, `test_theme_load.py`, and `test_dialogs.py`.
+- Current dialog-focused verification is clean: `uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py` and `uv run ruff check .`.
+- Full `uv run pytest` reached 99% with printed tests passing but hit the tool timeout; the remaining transparency cases were run separately and passed.

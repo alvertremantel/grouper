@@ -72,11 +72,10 @@ class FramelessDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
         self._container = QFrame()
         self._container.setObjectName("dialogFrame")
-        self._container.setAutoFillBackground(True)
+        self._container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(20)
@@ -93,10 +92,12 @@ class FramelessDialog(QDialog):
         self._container_layout.setSpacing(0)
 
         self._title_bar = DialogTitleBar("", self._container)
+        self._title_bar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._container_layout.addWidget(self._title_bar)
 
         self._content = QWidget()
         self._content.setObjectName("dialogContent")
+        self._content.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._container_layout.addWidget(self._content)
 
         self._content_layout = QVBoxLayout(self._content)
@@ -676,6 +677,8 @@ class EditTaskDialog(FramelessDialog):
         clear_layout(self._prereqs_container)
         prereqs = get_prerequisite_tasks(self.task.id)
         for pt in prereqs:
+            if pt.id is None:
+                continue
             text = f"{truncate_title(pt.title)} → this"
             chip = make_removable_chip(text, lambda pid=pt.id: self._remove_prereq(pid))
             self._prereqs_container.addWidget(chip)

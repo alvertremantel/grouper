@@ -83,7 +83,7 @@ QMainWindow::separator {
 /* == Dialog Title Bar ====================================================== */
 
 #dialogTitleBar {
-    background-color: {{bg-secondary}};
+    background-color: {{dialog-title-bg}};
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
@@ -115,15 +115,27 @@ QMainWindow::separator {
 /* == Dialog Frame ========================================================== */
 
 #dialogFrame {
-    background-color: {{bg-primary}};
-    border: 1px solid {{border}};
+    background-color: {{dialog-bg}};
+    border: 1px solid {{dialog-border}};
     border-radius: 10px;
 }
 
 #dialogContent {
-    background-color: {{bg-primary}};
+    background-color: {{dialog-content-bg}};
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
+}
+
+#dialogContent QListWidget,
+#dialogContent QListView,
+#dialogContent QComboBox QAbstractItemView {
+    background-color: {{bg-secondary}};
+    border: 1px solid {{border}};
+}
+
+#dialogContent QListWidget QWidget,
+#dialogContent QListView QWidget {
+    background-color: {{bg-secondary}};
 }
 
 /* == Sidebar =============================================================== */
@@ -179,6 +191,32 @@ QMainWindow::separator {
 
 #card:hover {
     border-color: {{accent}};
+}
+
+/* Parent-card transparency should not bleed into parented frameless dialogs. */
+#card #dialogFrame {
+    background-color: {{dialog-bg}};
+    border: 1px solid {{dialog-border}};
+}
+
+#card #dialogTitleBar {
+    background-color: {{dialog-title-bg}};
+}
+
+#card #dialogContent {
+    background-color: {{dialog-content-bg}};
+}
+
+#card #dialogContent QListWidget,
+#card #dialogContent QListView,
+#card #dialogContent QComboBox QAbstractItemView {
+    background-color: {{bg-secondary}};
+    border: 1px solid {{border}};
+}
+
+#card #dialogContent QListWidget QWidget,
+#card #dialogContent QListView QWidget {
+    background-color: {{bg-secondary}};
 }
 
 /* == Buttons =============================================================== */

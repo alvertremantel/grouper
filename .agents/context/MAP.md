@@ -42,4 +42,5 @@
 - `grouper/styles/_base.qss`: shared widget and dialog QSS
 - `grouper_core/colors.py`: theme palettes and dialog surface tokens
 - `tests/widget/test_transparency.py`: dialog contrast regressions, including parented dialog checks
+- `tests/widget/test_theme_validation.py`: token coverage for dialog surface palette entries
 - `.agents/context/qt-pitfalls.md`: lessons learned from the dialog contrast investigation
