@@ -27,18 +27,14 @@ server = [
 ]
 test = [
     "pytest>=8.0",
-    "pywinauto>=0.6.8; sys_platform == \"win32\"",
-    "psutil>=5.9",
     "ruff>=0.9",
     "ty>=0.0.1a1",
-    "mss>=9.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
     "slow: tests taking >5 seconds",
-    "e2e: end-to-end tests launching the full app subprocess",
     "widget: tests requiring a QApplication but not the full app",
 ]
 addopts = "-v --tb=short --strict-markers"
