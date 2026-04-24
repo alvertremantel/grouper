@@ -33,12 +33,15 @@ def isolated_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     _conn._init_paths()
     _conn.init_database()
 
+    import grouper.config as _app_cfg
     import grouper_core.config as _cfg
 
     fake_app_dir = tmp_path / "grouper_config"
     fake_config_file = fake_app_dir / "config.json"
     monkeypatch.setattr(_cfg, "APP_DIR", fake_app_dir)
     monkeypatch.setattr(_cfg, "CONFIG_FILE", fake_config_file)
+    monkeypatch.setattr(_app_cfg, "APP_DIR", fake_app_dir)
+    monkeypatch.setattr(_app_cfg, "CONFIG_FILE", fake_config_file)
     _cfg.ConfigManager._instance = None
 
     return data_dir

@@ -15,6 +15,9 @@
 
 - `grouper/main.py`: desktop startup
 - `grouper/app.py`: main window
+- `grouper/config.py`: desktop compatibility re-export of `grouper_core.config`
+- `grouper_core/config.py`: shared config paths and `ConfigManager`
+- `grouper_core/database/connection.py`: database path initialization and `db_path.txt` persistence
 - `grouper_cli/__main__.py`: CLI entry
 - `grouper_server/__main__.py`: server entry
 - `grouper_install/setup.py`: installer UI and install/uninstall flow
