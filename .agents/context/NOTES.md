@@ -31,7 +31,7 @@ uv run ruff check .
 - Version checking uses the GitHub Releases API.
 - `dist/` and `release/` are gitignored.
 - Tests isolate DB and config paths via the root autouse fixture in `tests/conftest.py`; no test should write to `~/.grouper/`.
-- The fixture patches both `grouper_core.config` and re-exported `grouper.config` path constants because `from ... import *` copies references before monkeypatching.
+- The fixture patches both `grouper_core.config` and re-exported `grouper.config` path constants because `from ... import *` copies references before monkeypatching. `APP_DIR`/`CONFIG_FILE` are monkeypatched **before** `_init_paths()` so any code path that calls `_save_data_directory()` writes to the temp dir.
 - Database `db_path.txt` persistence must use `grouper_core.config.APP_DIR`; do not add separate `Path.home() / ".grouper"` config paths in database modules.
 - The sync legacy entrypoint (`grouper_server/sync/__main__.py`) has no import-time `init_database()` side effect; DB init happens inside `main()`.
 - For Qt visual bugs, prefer testing the exact shown widget hierarchy over `widget.grab()` alone.
