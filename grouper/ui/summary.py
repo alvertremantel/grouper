@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import ClassVar
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QEvent, Qt, QTimer
 from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -258,7 +258,12 @@ class MiniBarTrend(QWidget):
 
         outer.addLayout(self._bars_row, 1)
 
+        self._days: list[tuple[str, float]] = []
+        self._bar_width: int = 22
+
     def update_data(self, days: list[tuple[str, float]], bar_width: int = 22) -> None:
+        self._days = days
+        self._bar_width = bar_width
         max_val = max((v for _, v in days), default=1.0) or 1.0
         colors = theme_colors(get_config().theme)
         card_bg = colors.get("card_bg", "#24263a")
@@ -272,6 +277,11 @@ class MiniBarTrend(QWidget):
             self._bars[i].setVisible(True)
         for i in range(len(days), self.MAX_BARS):
             self._bars[i].setVisible(False)
+
+    def changeEvent(self, event) -> None:  # type: ignore[override]
+        if event.type() == QEvent.Type.PaletteChange and self._days:
+            self.update_data(self._days, self._bar_width)
+        super().changeEvent(event)
 
 
 # ---------------------------------------------------------------------------

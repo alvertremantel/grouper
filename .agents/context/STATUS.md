@@ -23,6 +23,7 @@
 - Removed `WA_TranslucentBackground` from `FramelessDialog`; replaced with `WA_StyledBackground` on container, title bar, and content.
 - Consolidated `#card` dialog QSS selectors into base rules to reduce duplication.
 - Added warning log when `EditTaskDialog` encounters a prerequisite task with a missing `id`.
+- Fixed stale trend-bar colors on theme switch by re-running `MiniBarTrend.update_data` on `QEvent.PaletteChange`.
 
 ## Active Work
 

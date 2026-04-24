@@ -86,3 +86,29 @@ def test_summary_overdue_today(qapp):
 
     assert view._task_stats_num_lbl[3].text() == "1"  # Overdue
     assert view._task_stats_num_lbl[4].text() == "1"  # Due Soon
+
+
+def test_trend_bars_update_on_theme_switch(qapp):
+    """MiniBarTrend bars must recompute their inline colors when the theme changes."""
+    from unittest.mock import patch
+
+    from grouper.styles import load_theme
+    from grouper.ui.summary import MiniBarTrend
+
+    dark_cfg = type("C", (), {"theme": "dark"})()
+    light_cfg = type("C", (), {"theme": "light"})()
+
+    with patch("grouper.ui.summary.get_config", return_value=dark_cfg):
+        load_theme(qapp, "dark")
+        chart = MiniBarTrend()
+        chart.update_data([("M", 3600.0), ("T", 7200.0)], bar_width=22)
+        old_sheet = chart._bars[0]._bar.styleSheet()
+
+    with patch("grouper.ui.summary.get_config", return_value=light_cfg):
+        load_theme(qapp, "light")
+        qapp.processEvents()
+
+    new_sheet = chart._bars[0]._bar.styleSheet()
+    assert new_sheet != old_sheet, (
+        "Trend bar inline stylesheet did not change after theme switch"
+    )
