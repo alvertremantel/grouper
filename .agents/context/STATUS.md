@@ -28,6 +28,8 @@
 - Routed database `db_path.txt` persistence through `grouper_core.config.APP_DIR` instead of duplicated hardcoded home paths.
 - Removed import-time `init_database()` side effect from `grouper_server/sync/__main__.py`; DB init now happens only inside `main()`.
 - Added regression tests for test isolation (`tests/unit/test_test_isolation.py`) and sync entrypoint import purity (`tests/unit/sync/test_sync_entrypoint_import.py`).
+- Fixed activity rename not persisting: changed `_ActivityDetailEditor` name input signal from `returnPressed` to `editingFinished` so renames save on focus loss, not just Enter. Also fixed visual bug where an empty invalid rename would leave the field visually blank.
+- Fixed identical rename persistence bug in `_GroupSection` by switching inline group renames to `editingFinished`.
 
 ## Active Work
 
@@ -41,3 +43,6 @@
 - Recent focused verification is clean: `uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py` and `uv run ruff check .`.
 - Full `uv run pytest` reached 99% with printed tests passing but hit the tool timeout; the remaining transparency cases were run separately and passed.
 - Test isolation hardening verified clean: `uv run pytest tests/unit/test_test_isolation.py tests/unit/sync/test_sync_entrypoint_import.py tests/unit/sync/test_sync_runtime.py` passes. `uv run ruff check tests/conftest.py tests/unit/test_test_isolation.py grouper_core/database/connection.py` passes. Pre-existing `ty` type noise is unrelated to these changes.
+- Full `uv run pytest` passes (530/531; 1 pre-existing failure from missing `win32com` module in test environment).
+- `uv run ruff check .` clean.
+- `tests/widget/test_activity_config.py` covers editingFinished rename persistence with 6 tests.
