@@ -1,7 +1,8 @@
 """conftest.py -- Root fixtures shared by all Grouper tests.
 
-Provides only DB isolation. No GUI or pywinauto imports here so that
-unit tests never pull in heavyweight dependencies.
+Provides DB and config isolation so tests never touch the user's real
+Grouper data or config home directory. No GUI or pywinauto imports here
+so that unit tests never pull in heavyweight dependencies.
 """
 
 from pathlib import Path
@@ -16,6 +17,10 @@ def isolated_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     Sets GROUPER_DATA_DIR, re-initialises paths, and creates
     the schema so each test is fully isolated from the user's real data.
 
+    Also isolates config paths (APP_DIR / CONFIG_FILE) so no config.json
+    artifacts are written to the user's real home directory, and resets
+    the ConfigManager singleton so each test starts with a clean instance.
+
     Individual test files may override this fixture if they need different
     setup (e.g. migration tests that don't want init_database called).
     """
@@ -27,6 +32,14 @@ def isolated_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
     _conn._init_paths()
     _conn.init_database()
+
+    import grouper_core.config as _cfg
+
+    fake_app_dir = tmp_path / "grouper_config"
+    fake_config_file = fake_app_dir / "config.json"
+    monkeypatch.setattr(_cfg, "APP_DIR", fake_app_dir)
+    monkeypatch.setattr(_cfg, "CONFIG_FILE", fake_config_file)
+    _cfg.ConfigManager._instance = None
 
     return data_dir
 

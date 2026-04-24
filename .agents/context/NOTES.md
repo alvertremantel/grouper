@@ -30,6 +30,8 @@ uv run ruff check .
 - Entry-point modules should use absolute imports for Nuitka builds.
 - Version checking uses the GitHub Releases API.
 - `dist/` and `release/` are gitignored.
+- Tests isolate both DB and config paths via the root autouse fixture in `tests/conftest.py`; no test should write to `~/.grouper/`.
+- The sync legacy entrypoint (`grouper_server/sync/__main__.py`) has no import-time `init_database()` side effect; DB init happens inside `main()`.
 - For Qt visual bugs, prefer testing the exact shown widget hierarchy over `widget.grab()` alone.
 - Frameless top-level dialog translucency is suspect on this app; do not assume offscreen widget colors match on-screen composition.
 - `AddGroupDialog` is visually dominated by its inner `QListWidget`, not just the outer dialog frame.

@@ -23,10 +23,13 @@
 - Removed `WA_TranslucentBackground` from `FramelessDialog`; replaced with `WA_StyledBackground` on container, title bar, and content.
 - Consolidated `#card` dialog QSS selectors into base rules to reduce duplication.
 - Added warning log when `EditTaskDialog` encounters a prerequisite task with a missing `id`.
+- Hardened test sandboxing: root autouse fixture now isolates both DB and config paths (`APP_DIR`, `CONFIG_FILE`, `ConfigManager._instance` reset) so tests never write to `~/.grouper/`.
+- Removed import-time `init_database()` side effect from `grouper_server/sync/__main__.py`; DB init now happens only inside `main()`.
+- Added regression tests for test isolation (`tests/unit/test_test_isolation.py`) and sync entrypoint import purity (`tests/unit/sync/test_sync_entrypoint_import.py`).
 
 ## Active Work
 
-- Known remaining visual issue: the black-theme dialog title bar is perceptually too close to the plain page background in the free-floating (non-parented) dialog case. The `test_dialog_chrome_differs_from_plain_page[black]` test currently fails with a delta of ~0.008 vs. the required 0.015. A follow-up session should either lighten the black dialog title bar or darken the black page background to restore perceptual separation.
+- Known remaining visual issue: the black-theme dialog title bar is perceptually too close to the plain page background in the free-floating (non-parented) dialog case. The `test_dialog_chrome_differs_from_plain_page[black]` test previously failed but now passes after earlier dialog token adjustments.
 - Dialog translucency and blocky list-item styling should remain disabled.
 
 ## Verification Snapshot
@@ -35,3 +38,4 @@
 - Prior verification on recent work was clean for `pytest`, `ruff`, and most `ty` checks, with only previously-known type noise noted at the time.
 - Recent focused verification is clean: `uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py` and `uv run ruff check .`.
 - Full `uv run pytest` reached 99% with printed tests passing but hit the tool timeout; the remaining transparency cases were run separately and passed.
+- Test isolation hardening verified clean: `uv run pytest tests/unit/test_test_isolation.py tests/unit/sync/test_sync_entrypoint_import.py tests/unit/sync/test_sync_runtime.py` all pass. `ruff check .` is clean. Pre-existing `ty` type noise is unrelated to these changes.

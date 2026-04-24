@@ -14,13 +14,12 @@ import asyncio
 import logging
 import sys
 
-# Init database before anything else
 from grouper_core.database.connection import get_database_path, init_database
-
-init_database()
 
 
 def main() -> None:
+    init_database()
+
     parser = argparse.ArgumentParser(
         prog="grouper-server",
         description="Grouper LAN Sync — sync your data between devices",
