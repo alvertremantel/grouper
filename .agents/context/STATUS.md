@@ -23,15 +23,16 @@
 - Removed `WA_TranslucentBackground` from `FramelessDialog`; replaced with `WA_StyledBackground` on container, title bar, and content.
 - Consolidated `#card` dialog QSS selectors into base rules to reduce duplication.
 - Added warning log when `EditTaskDialog` encounters a prerequisite task with a missing `id`.
+- Fixed activity rename not persisting: changed `_ActivityDetailEditor` name input signal from `returnPressed` to `editingFinished` so renames save on focus loss, not just Enter.
 
 ## Active Work
 
 - Known remaining visual issue: the black-theme dialog title bar is perceptually too close to the plain page background in the free-floating (non-parented) dialog case. The `test_dialog_chrome_differs_from_plain_page[black]` test currently fails with a delta of ~0.008 vs. the required 0.015. A follow-up session should either lighten the black dialog title bar or darken the black page background to restore perceptual separation.
 - Dialog translucency and blocky list-item styling should remain disabled.
+- Follow-up: the group rename in `_GroupSection` (line ~281) also uses `returnPressed` and has the same focus-loss persistence bug.
 
 ## Verification Snapshot
 
-- Unit and widget coverage was expanded substantially around installer behavior.
-- Prior verification on recent work was clean for `pytest`, `ruff`, and most `ty` checks, with only previously-known type noise noted at the time.
-- Recent focused verification is clean: `uv run pytest tests/widget/test_transparency.py tests/widget/test_theme_validation.py tests/widget/test_theme_load.py tests/widget/test_dialogs.py` and `uv run ruff check .`.
-- Full `uv run pytest` reached 99% with printed tests passing but hit the tool timeout; the remaining transparency cases were run separately and passed.
+- Full `uv run pytest` passes (528/529; 1 pre-existing failure from missing `win32com` module in test environment).
+- `uv run ruff check .` clean.
+- New `tests/widget/test_activity_config.py` covers editingFinished rename persistence with 4 tests.

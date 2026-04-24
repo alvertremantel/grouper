@@ -439,7 +439,7 @@ class _ActivityDetailEditor(QFrame):
 
         self._name_input = QLineEdit()
         self._name_input.setObjectName("transparentInput")
-        self._name_input.returnPressed.connect(self._rename_activity)
+        self._name_input.editingFinished.connect(self._rename_activity)
         name_section.addWidget(self._name_input)
         self._outer.addLayout(name_section)
 

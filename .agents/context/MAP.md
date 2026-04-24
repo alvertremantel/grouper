@@ -44,4 +44,5 @@
 - `tests/widget/test_transparency.py`: dialog contrast regressions, including parented dialog checks
 - `tests/widget/test_theme_validation.py`: token coverage for dialog surface palette entries
 - `tests/widget/test_dialogs.py`: construction tests for all `FramelessDialog` subclasses
+- `tests/widget/test_activity_config.py`: rename persistence via `editingFinished` signal
 - `.agents/context/qt-pitfalls.md`: lessons learned from the dialog contrast investigation
