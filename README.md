@@ -50,23 +50,9 @@ directory at any time from **Settings → Data → Move Data Directory**.
 
 ## Built With
 
-<p align="center">
-  <a href="https://python.org">
-    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" width="48" height="48"/>
-  </a>
-  <a href="https://doc.qt.io/qtforpython/">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/PySide_logo.svg" alt="PySide6" width="48" height="48"/>
-  </a>
-  <a href="https://sqlite.org">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/SQLite370.svg" alt="SQLite" width="48" height="48"/>
-  </a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.11+"/>
-  <img src="https://img.shields.io/badge/Qt-PySide6-41CD52?style=flat&logo=qt&logoColor=white" alt="PySide6"/>
-  <img src="https://img.shields.io/badge/Database-SQLite-003B57?style=flat&logo=sqlite&logoColor=white" alt="SQLite"/>
-</p>
+![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
+![PySide6](https://img.shields.io/badge/Qt-PySide6-41CD52?style=flat&logo=qt&logoColor=white)
+![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=flat&logo=sqlite&logoColor=white)
 
 ## Contact & Support
 
