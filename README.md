@@ -2,6 +2,8 @@
 
 **A local productivity hub for time tracking and task management.**
 
+![Dashboard](.github/assets/dark-theme-dashboard.png)
+
 ---
 
 ## Installation
@@ -23,6 +25,13 @@
 
 ## Features
 
+| | |
+|---|---|
+| **Time Tracker** | ![Timer](.github/assets/black-theme-timer.png) |
+| **Task Board** | ![Task Board](.github/assets/dark-theme-task-board.png) |
+| **Task List** | ![Task List](.github/assets/dark-theme-task-list.png) |
+| **Summary** | ![Summary](.github/assets/black-theme-summary-page.png) |
+
 - **Time Tracker** — start/stop/pause sessions, tag them to tasks or activities
 - **Task Board** — Kanban-style board with drag-and-drop columns
 - **Task List** — flat list view with filtering and sorting
@@ -41,9 +50,9 @@ directory at any time from **Settings → Data → Move Data Directory**.
 
 ## Built With
 
-- [Python 3.11+](https://python.org)
-- [PySide6](https://doc.qt.io/qtforpython/) — Qt bindings for Python
-- [SQLite](https://sqlite.org) — embedded database
+![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)
+![PySide6](https://img.shields.io/badge/Qt-PySide6-41CD52?style=flat&logo=qt&logoColor=white)
+![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=flat&logo=sqlite&logoColor=white)
 
 ## Contact & Support
 

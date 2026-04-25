@@ -278,7 +278,7 @@ class _GroupSection(QFrame):
 
         self._name_input = QLineEdit(self._group.name)
         self._name_input.setObjectName("transparentInput")
-        self._name_input.returnPressed.connect(self._commit_rename)
+        self._name_input.editingFinished.connect(self._commit_rename)
         self._name_input.hide()
         header.addWidget(self._name_input)
 
@@ -439,7 +439,7 @@ class _ActivityDetailEditor(QFrame):
 
         self._name_input = QLineEdit()
         self._name_input.setObjectName("transparentInput")
-        self._name_input.returnPressed.connect(self._rename_activity)
+        self._name_input.editingFinished.connect(self._rename_activity)
         name_section.addWidget(self._name_input)
         self._outer.addLayout(name_section)
 
@@ -628,6 +628,8 @@ class _ActivityDetailEditor(QFrame):
             rename_activity_by_id(self._activity.id, new_name)  # type: ignore[arg-type]
             self._activity.name = new_name
             self.data_changed.emit()
+        else:
+            self._name_input.setText(self._activity.name)
         self._name_input.clearFocus()
 
     def _toggle_archive(self) -> None:

@@ -19,7 +19,7 @@ class SpinnerWidget(QWidget):
         self._color = QColor(color)
         self._angle = 0
         self._timer = QTimer(self)
-        self._timer.setInterval(16)  # ~60fps
+        self._timer.setInterval(33)  # ~30fps is smoother under startup load
         self._timer.timeout.connect(self._tick)
 
     def start(self) -> None:
