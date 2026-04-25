@@ -2,6 +2,8 @@
 
 **A local productivity hub for time tracking and task management.**
 
+![Dashboard](.github/assets/dark-theme-dashboard.png)
+
 ---
 
 ## Installation
@@ -23,6 +25,13 @@
 
 ## Features
 
+| | |
+|---|---|
+| **Time Tracker** | ![Timer](.github/assets/black-theme-timer.png) |
+| **Task Board** | ![Task Board](.github/assets/dark-theme-task-board.png) |
+| **Task List** | ![Task List](.github/assets/dark-theme-task-list.png) |
+| **Summary** | ![Summary](.github/assets/black-theme-summary-page.png) |
+
 - **Time Tracker** — start/stop/pause sessions, tag them to tasks or activities
 - **Task Board** — Kanban-style board with drag-and-drop columns
 - **Task List** — flat list view with filtering and sorting
@@ -41,9 +50,23 @@ directory at any time from **Settings → Data → Move Data Directory**.
 
 ## Built With
 
-- [Python 3.11+](https://python.org)
-- [PySide6](https://doc.qt.io/qtforpython/) — Qt bindings for Python
-- [SQLite](https://sqlite.org) — embedded database
+<p align="center">
+  <a href="https://python.org">
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python" width="48" height="48"/>
+  </a>
+  <a href="https://doc.qt.io/qtforpython/">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/PySide_logo.svg" alt="PySide6" width="48" height="48"/>
+  </a>
+  <a href="https://sqlite.org">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/38/SQLite370.svg" alt="SQLite" width="48" height="48"/>
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.11+"/>
+  <img src="https://img.shields.io/badge/Qt-PySide6-41CD52?style=flat&logo=qt&logoColor=white" alt="PySide6"/>
+  <img src="https://img.shields.io/badge/Database-SQLite-003B57?style=flat&logo=sqlite&logoColor=white" alt="SQLite"/>
+</p>
 
 ## Contact & Support
 
