@@ -19,7 +19,7 @@ class AnimatedCard(QFrame):
     Horizontal axis (maximumWidth): used for pause/resume transitions.
     """
 
-    ANIMATION_DURATION = 500
+    ANIMATION_DURATION = 250
 
     def __init__(self, card: QFrame, parent: QWidget | None = None, animate: bool = True):
         super().__init__(parent)

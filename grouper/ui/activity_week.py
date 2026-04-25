@@ -280,7 +280,7 @@ class ActivityWeekStrip(QWidget):
         self.setFixedHeight(_GRID_H + _HEADER_H + 4)
 
         self._pulse_timer = QTimer(self)
-        self._pulse_timer.setInterval(100)
+        self._pulse_timer.setInterval(200)
         self._pulse_timer.timeout.connect(self._pulse_tick)
 
     # ── layout ───────────────────────────────────────────────────────────

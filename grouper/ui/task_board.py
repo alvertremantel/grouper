@@ -359,7 +359,7 @@ class TaskCard(QFrame):
         if get_config().animations_enabled:
             target = self._action_row.sizeHint().height()
             self._expand_anim = QPropertyAnimation(self._action_row, b"maximumHeight")
-            self._expand_anim.setDuration(200)
+            self._expand_anim.setDuration(120)
             self._expand_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
             self._expand_anim.setStartValue(0)
             self._expand_anim.setEndValue(target)
@@ -380,7 +380,7 @@ class TaskCard(QFrame):
         if get_config().animations_enabled:
             current_h = self._action_row.height()
             self._collapse_anim = QPropertyAnimation(self._action_row, b"maximumHeight")
-            self._collapse_anim.setDuration(150)
+            self._collapse_anim.setDuration(100)
             self._collapse_anim.setEasingCurve(QEasingCurve.Type.InCubic)
             self._collapse_anim.setStartValue(current_h)
             self._collapse_anim.setEndValue(0)
@@ -754,12 +754,13 @@ class TaskBoardView(QWidget):
         # Ensure at least a default board exists
         default_board = get_or_create_default_board()
 
-        # Load active board ID from settings, defaulting to ID 1
-        stored = get_setting("active_board_id", str(default_board.id))
+        # Load active board ID from settings, defaulting to the ensured board.
+        default_board_id = default_board.id if default_board.id is not None else 1
+        stored = get_setting("active_board_id", str(default_board_id)) or str(default_board_id)
         try:
             self._active_board_id: int | None = int(stored)
         except ValueError:
-            self._active_board_id = default_board.id
+            self._active_board_id = default_board_id
 
         self._build()
         self._dirty: bool = False
@@ -927,6 +928,8 @@ class TaskBoardView(QWidget):
         all_project_tasks: list[tuple[Project, list[Task]]] = []
         all_task_ids: list[int] = []
         for p in projects:
+            if p.id is None:
+                continue
             tasks = get_tasks(p.id)
             all_project_tasks.append((p, tasks))
             all_task_ids.extend(t.id for t in tasks if t.id is not None)
