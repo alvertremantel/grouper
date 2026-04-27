@@ -45,7 +45,7 @@ python -m nuitka ^
     --output-filename=grouper-cli.exe ^
     --output-dir=dist ^
     --jobs=2 ^
-    grouper_cli\main.py
+    cli\main.py
 
 if errorlevel 1 (
     echo.

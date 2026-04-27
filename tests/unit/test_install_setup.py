@@ -1,7 +1,7 @@
 """Tests for the installation setup helpers and first-run config.
 
 Covers:
-  - grouper_install/setup.py: path helpers, shortcut logic
+  - installer/setup.py: path helpers, shortcut logic
   - grouper/config.py: first-run config creation
 """
 
@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from desktop.config import Config, ConfigManager
-from grouper_install.setup import (
+from installer.setup import (
     _create_desktop_shortcut,
     _create_shortcut,
     _create_start_menu_shortcut,
@@ -36,7 +36,7 @@ def _isolate_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 # ---------------------------------------------------------------------------
-# grouper_install/setup.py path helpers
+# installer/setup.py path helpers
 # ---------------------------------------------------------------------------
 
 
@@ -74,7 +74,7 @@ class TestStartMenuPath:
 
 
 # ---------------------------------------------------------------------------
-# grouper_install/setup.py shortcut creation
+# installer/setup.py shortcut creation
 # ---------------------------------------------------------------------------
 
 
@@ -105,7 +105,7 @@ class TestShortcutCreation:
 
         with (
             patch("win32com.client.Dispatch", return_value=mock_shell),
-            patch("grouper_install.setup._desktop", return_value=fake_desktop),
+            patch("installer.setup._desktop", return_value=fake_desktop),
         ):
             _create_desktop_shortcut(tmp_path)
 
@@ -122,7 +122,7 @@ class TestShortcutCreation:
 
         with (
             patch("win32com.client.Dispatch", return_value=mock_shell),
-            patch("grouper_install.setup._start_menu_programs", return_value=fake_programs),
+            patch("installer.setup._start_menu_programs", return_value=fake_programs),
         ):
             _create_start_menu_shortcut(tmp_path)
 

@@ -11,7 +11,7 @@ import grouper_core.database.tasks as _tasks
 from grouper_core.formatting import filter_upcoming_tasks
 from grouper_core.operations import sync_task_prerequisites, sync_task_tags
 
-from grouper_cli.output import print_error, print_json, print_table
+from cli.output import print_error, print_json, print_table
 
 
 def _format_task(t: Any) -> dict[str, Any]:

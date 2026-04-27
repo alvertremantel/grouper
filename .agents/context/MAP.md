@@ -4,9 +4,9 @@
 
 - `desktop/`: PySide6 desktop GUI package; GUI script command remains `grouper`.
 - `grouper_core/`: shared models, config, formatting, operations, DB, migrations, colors.
-- `grouper_cli/`: CLI entry points and commands.
+- `cli/`: CLI entry points and commands.
 - `grouper_server/`: sync server and web dashboard.
-- `grouper_install/`: Windows installer and release-bundle metadata.
+- `installer/`: Windows installer and release-bundle metadata.
 - `tests/`: unit, widget, CLI, integration, and e2e coverage.
 - `scripts/`, `userdocs/`: build/release helpers and user-facing docs.
 
@@ -31,10 +31,10 @@
 
 - `grouper_core/config.py`: shared config paths and `ConfigManager`.
 - `grouper_core/database/connection.py`: DB path initialization and `db_path.txt` persistence.
-- `grouper_cli/main.py`: CLI app entry.
+- `cli/main.py`: CLI app entry.
 - `grouper_server/__main__.py`: server entry; `grouper_server/sync/` contains sync protocol helpers.
-- `grouper_install/setup.py`: installer UI and install/uninstall flow.
-- `grouper_install/{dist_meta,path_env,elevation,manifest,registry}.py`: installer support modules.
+- `installer/setup.py`: installer UI and install/uninstall flow.
+- `installer/{dist_meta,path_env,elevation,manifest,registry}.py`: installer support modules.
 
 ## Test / Theme Hotspots
 

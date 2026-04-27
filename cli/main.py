@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from grouper_cli.commands import activity, board, dashboard, event, project, session, task
+from cli.commands import activity, board, dashboard, event, project, session, task
 
 
 def _get_version() -> str:

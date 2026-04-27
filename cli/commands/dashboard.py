@@ -10,7 +10,7 @@ import grouper_core.database.sessions as _sessions
 import grouper_core.database.tasks as _tasks
 from grouper_core.formatting import filter_upcoming_tasks, start_of_day
 
-from grouper_cli.output import format_duration, print_json, print_table
+from cli.output import format_duration, print_json, print_table
 
 
 def _format_session_brief(s: Any) -> dict[str, Any]:

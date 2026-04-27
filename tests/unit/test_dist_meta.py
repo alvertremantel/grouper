@@ -1,4 +1,4 @@
-"""Tests for grouper_install/dist_meta.py."""
+"""Tests for installer/dist_meta.py."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import tomllib
 from pathlib import Path
 
 import pytest
-from grouper_install.dist_meta import (
+from installer.dist_meta import (
     VARIANTS,
     default_destinations,
     load_dist_toml,

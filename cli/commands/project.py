@@ -7,7 +7,7 @@ from typing import Any
 
 import grouper_core.database.projects as _projects
 
-from grouper_cli.output import print_json, print_table
+from cli.output import print_json, print_table
 
 
 def _format_project(p: Any) -> dict[str, Any]:

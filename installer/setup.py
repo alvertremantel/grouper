@@ -12,7 +12,7 @@ Compiled to setup.exe via Nuitka:
     nuitka --onefile --windows-console-mode=disable \
            --enable-plugin=pyside6 --include-package=win32com \
            --windows-icon-from-ico=../grouper/assets/icon.ico \
-           grouper_install/setup.py
+            installer/setup.py
 """
 
 from __future__ import annotations
@@ -42,18 +42,18 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from grouper_install.dist_meta import (
+from installer.dist_meta import (
     load_dist_toml,
 )
-from grouper_install.elevation import is_elevated, relaunch_elevated
-from grouper_install.manifest import (
+from installer.elevation import is_elevated, relaunch_elevated
+from installer.manifest import (
     InstallManifest,
     read_manifest,
     remove_manifest,
     write_manifest,
 )
-from grouper_install.path_env import add_to_machine_path, remove_from_machine_path
-from grouper_install.registry import register_uninstall, unregister_uninstall
+from installer.path_env import add_to_machine_path, remove_from_machine_path
+from installer.registry import register_uninstall, unregister_uninstall
 
 # ---------------------------------------------------------------------------
 # Path helpers

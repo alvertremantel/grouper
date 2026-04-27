@@ -9,7 +9,7 @@ from typing import Any
 import grouper_core.database.calendars as _calendars
 import grouper_core.database.events as _events
 
-from grouper_cli.output import print_error, print_json, print_table
+from cli.output import print_error, print_json, print_table
 
 
 def _format_event(e: Any) -> dict[str, Any]:

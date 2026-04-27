@@ -9,7 +9,7 @@ from typing import Any
 import grouper_core.database.activities as _activities
 import grouper_core.database.sessions as _sessions
 
-from grouper_cli.output import format_duration, print_json, print_table
+from cli.output import format_duration, print_json, print_table
 
 
 def _format_activity(a: Any) -> dict[str, Any]:

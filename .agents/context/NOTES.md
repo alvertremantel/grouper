@@ -6,9 +6,9 @@ Offline-first productivity app with a PySide6 desktop UI, SQLite storage, CLI to
 
 - `desktop/`: PySide6 desktop app; installed GUI command remains `grouper`.
 - `grouper_core/`: shared models, config, formatting, operations, DB, migrations, and colors.
-- `grouper_cli/`: CLI tools.
+- `cli/`: CLI tools.
 - `grouper_server/`: sync server and web dashboard.
-- `grouper_install/`: Windows installer.
+- `installer/`: Windows installer.
 
 ## Quick Commands
 

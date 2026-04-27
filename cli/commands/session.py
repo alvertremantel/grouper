@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import grouper_core.database.sessions as _sessions
 from grouper_core.formatting import format_session as _format_session
 
-from grouper_cli.output import format_duration, print_error, print_json, print_table
+from cli.output import format_duration, print_error, print_json, print_table
 
 # ---------------------------------------------------------------------------
 # Command handlers

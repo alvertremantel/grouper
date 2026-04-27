@@ -7,7 +7,7 @@ from typing import Any
 
 import grouper_core.database.boards as _boards
 
-from grouper_cli.output import print_json, print_table
+from cli.output import print_json, print_table
 
 
 def _format_board(b: Any) -> dict[str, Any]:

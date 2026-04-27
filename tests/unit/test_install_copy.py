@@ -1,11 +1,11 @@
-"""Tests for the _copy_tree helper in grouper_install/setup.py."""
+"""Tests for the _copy_tree helper in installer/setup.py."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
-from grouper_install.setup import _copy_tree
+from installer.setup import _copy_tree
 
 
 class TestCopyTree:
