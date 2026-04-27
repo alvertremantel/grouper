@@ -5,6 +5,8 @@ Centralizes FramelessDialog and BaseFormDialog to avoid circular imports
 and provide consistent dialog behavior across the application.
 """
 
+import contextlib
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
@@ -24,17 +26,21 @@ class FramelessDialog(QDialog):
     """Base class for frameless dialogs with custom title bar and shadow.
 
     Transparency contract:
-        - dialogFrame and dialogContent have WA_StyledBackground=True
-        - Dialog itself has autoFillBackground=True to prevent black margins
-          when parented to another window.
+        - dialogFrame and dialogContent have WA_StyledBackground=True and are
+          opaque/styled so the old black-margin bug does not return.
+        - The outer QDialog#framelessDialog is transparent so the 16 px shadow
+          gutter is not painted as a visible border.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
+        self.setObjectName("framelessDialog")
 
-        # Prevent black transparent margins when parented
-        self.setAutoFillBackground(True)
+        # Transparent outer gutter — the 16 px margin is for the drop shadow,
+        # not a visible border. Inner dialogFrame/dialogContent remain opaque.
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setAutoFillBackground(False)
 
         self._container = QFrame()
         self._container.setObjectName("dialogFrame")
@@ -75,30 +81,67 @@ class FramelessDialog(QDialog):
     def contentLayout(self) -> QVBoxLayout:
         return self._content_layout
 
+    @staticmethod
+    def set_field_error(widget, has_error: bool = True):
+        """Toggle the 'error' property on a widget and force QSS re-evaluation."""
+        widget.setProperty("error", has_error)
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
 
-class BaseFormDialog(FramelessDialog):
-    """FramelessDialog with standard form layout + Ok/Cancel buttons.
+
+class BaseButtonDialog(FramelessDialog):
+    """FramelessDialog with a vertical content layout + standard button box.
+
+    For dialogs that need custom stacked content (not QFormLayout) but still
+    want Ok/Cancel (or other configurable) buttons.
+    """
+
+    def __init__(
+        self,
+        title: str,
+        min_width: int = 380,
+        parent=None,
+        buttons: QDialogButtonBox.StandardButton = QDialogButtonBox.StandardButton.Ok
+        | QDialogButtonBox.StandardButton.Cancel,
+    ):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setMinimumWidth(min_width)
+        self._buttons = QDialogButtonBox(buttons)
+        self._buttons.accepted.connect(self.accept)
+        self._buttons.rejected.connect(self.reject)
+        self._buttons_finalized = False
+
+    def finalize_content(self) -> None:
+        """Append the button box to the content layout."""
+        if self._buttons_finalized:
+            raise RuntimeError("Dialog buttons already finalized")
+        self.contentLayout().addWidget(self._buttons)
+        self._buttons_finalized = True
+
+    def set_accept_handler(self, handler) -> None:
+        """Replace the default accepted -> self.accept connection."""
+        with contextlib.suppress(TypeError, RuntimeError):
+            self._buttons.accepted.disconnect(self.accept)
+        self._buttons.accepted.connect(handler)
+
+
+class BaseFormDialog(BaseButtonDialog):
+    """BaseButtonDialog with standard form layout + Ok/Cancel buttons.
 
     Provides:
     - QFormLayout with standard spacing (accessible as self._form)
-    - Ok/Cancel button box (accessible as self._buttons)
+    - Ok/Cancel button box (inherited as self._buttons)
     - add_row() helper for form fields
     - finalize_form() to add buttons to the form
     - set_field_error() static helper for field validation
     """
 
     def __init__(self, title: str, min_width: int = 380, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setMinimumWidth(min_width)
+        super().__init__(title, min_width, parent)
         self._form = QFormLayout()
         self._form.setSpacing(10)
         self.contentLayout().addLayout(self._form)
-        self._buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-        )
-        self._buttons.accepted.connect(self.accept)
-        self._buttons.rejected.connect(self.reject)
 
     def add_row(self, label, widget):
         """Add a row to the form layout."""
@@ -111,10 +154,3 @@ class BaseFormDialog(FramelessDialog):
     def finalize_form(self):
         """Add the button box to the form. Call after all rows are added."""
         self._form.addRow(self._buttons)
-
-    @staticmethod
-    def set_field_error(widget, has_error: bool = True):
-        """Toggle the 'error' property on a widget and force QSS re-evaluation."""
-        widget.setProperty("error", has_error)
-        widget.style().unpolish(widget)
-        widget.style().polish(widget)

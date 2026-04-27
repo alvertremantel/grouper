@@ -599,8 +599,14 @@ class _ActivityDetailEditor(QFrame):
         from ..tasks.dialogs import AddGroupDialog
 
         all_tags = [t.name for t in list_tags()]
-        dlg = AddGroupDialog(all_tags, self._activity.tags, self)
-        dlg.setWindowTitle("Add Tag")
+        dlg = AddGroupDialog(
+            all_tags,
+            self._activity.tags,
+            self,
+            title="Add Tag",
+            item_label="tag",
+            limit_hint=None,
+        )
         if (
             dlg.exec()
             and dlg.selected_group

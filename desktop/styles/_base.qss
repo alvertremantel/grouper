@@ -198,10 +198,7 @@ QMainWindow::separator {
     border-color: {{accent}};
 }
 
-/* Parent-card transparency should not bleed into parented frameless dialogs. */
-#card QDialog {
-    background-color: {{bg-secondary}};
-}
+
 
 /* == Buttons =============================================================== */
 
@@ -557,6 +554,10 @@ QStatusBar {
 
 QDialog {
     background-color: {{bg-primary}};
+}
+
+QDialog#framelessDialog {
+    background: transparent;
 }
 
 QDialogButtonBox QPushButton {

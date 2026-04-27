@@ -32,7 +32,7 @@ from ...database.tags import (
 )
 from ...database.task_links import add_link, delete_link, get_links_for_task
 from ...database.tasks import get_task, get_tasks_by_board
-from ..shared.base_dialog import BaseFormDialog, FramelessDialog
+from ..shared.base_dialog import BaseButtonDialog, BaseFormDialog
 from ..shared.widgets import (
     ThemedDateEdit,
     ThemedSpinBox,
@@ -600,16 +600,11 @@ class EditTaskDialog(BaseFormDialog):
         }
 
 
-class StopSessionDialog(BaseFormDialog):
+class StopSessionDialog(BaseButtonDialog):
     """Dialog shown when stopping a session — allows notes and optional task attribution."""
 
     def __init__(self, activity_name: str, tasks: list | None = None, parent=None):
         super().__init__(f"Stop Session — {activity_name}", 400, parent)
-
-        # For this dialog we don't use the form layout for everything
-        # We add widgets directly to contentLayout, so we remove the form from content layout
-        # and manage our own layout
-        self.contentLayout().removeItem(self._form)
 
         layout = self.contentLayout()
 
@@ -632,7 +627,7 @@ class StopSessionDialog(BaseFormDialog):
             self.attr_check.toggled.connect(self.task_combo.setEnabled)
             layout.addWidget(self.task_combo)
 
-        layout.addWidget(self._buttons)
+        self.finalize_content()
 
     def get_values(self) -> dict:
         task_id = None
@@ -644,43 +639,52 @@ class StopSessionDialog(BaseFormDialog):
         }
 
 
-class ConfirmDialog(FramelessDialog):
+class ConfirmDialog(BaseButtonDialog):
     """Simple yes/no confirmation dialog."""
 
     def __init__(self, title: str, message: str, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        layout = self.contentLayout()
-        layout.addWidget(QLabel(message))
-        buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No
+        super().__init__(
+            title,
+            380,
+            parent,
+            buttons=QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No,
         )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        self.contentLayout().addWidget(QLabel(message))
+        self.finalize_content()
 
 
-class AddGroupDialog(BaseFormDialog):
-    """Dialog for adding a group to an activity."""
+class AddGroupDialog(BaseButtonDialog):
+    """Dialog for adding a group or tag to an activity."""
 
-    def __init__(self, existing_groups: list[str], current_groups: list[str], parent=None):
-        super().__init__("Add Group", 300, parent)
+    def __init__(
+        self,
+        existing_items: list[str],
+        current_items: list[str],
+        parent=None,
+        *,
+        title: str = "Add Group",
+        item_label: str = "group",
+        limit_hint: str | None = "max 3 groups per activity",
+    ):
+        super().__init__(title, 300, parent)
         self.selected_group = None
 
-        # Remove the default form and buttons since we have custom layout
-        self.contentLayout().removeItem(self._form)
-
         layout = self.contentLayout()
 
-        info_lbl = QLabel("Enter or select a group name (max 3 groups per activity):")
+        hint_text = f"Enter or select a {item_label} name"
+        if limit_hint:
+            hint_text += f" ({limit_hint}):"
+        else:
+            hint_text += ":"
+        info_lbl = QLabel(hint_text)
         info_lbl.setObjectName("infoLabel")
         layout.addWidget(info_lbl)
 
         self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("Group name")
+        self.name_input.setPlaceholderText(f"{item_label.capitalize()} name")
         layout.addWidget(self.name_input)
 
-        available = [g for g in existing_groups if g not in current_groups]
+        available = [g for g in existing_items if g not in current_items]
         if available:
             hint_lbl = QLabel("Or select existing:")
             hint_lbl.setObjectName("infoLabelSmall")
@@ -693,10 +697,8 @@ class AddGroupDialog(BaseFormDialog):
             self.existing_list.itemClicked.connect(self._select_existing)
             layout.addWidget(self.existing_list)
 
-        # Disconnect default accepted signal and use our custom handler
-        self._buttons.accepted.disconnect()
-        self._buttons.accepted.connect(self._on_accept)
-        layout.addWidget(self._buttons)
+        self.set_accept_handler(self._on_accept)
+        self.finalize_content()
 
     def _select_existing(self, item):
         self.selected_group = item.text()

@@ -92,3 +92,16 @@ class TestQssTemplateTokenCoverage:
                 rendered = rendered.replace("{{" + token + "}}", value)
             assert "{{" not in rendered, name
             assert "}}" not in rendered, name
+
+    def test_no_card_qdialog_override(self) -> None:
+        template = _get_template()
+        assert "#card QDialog" not in template
+
+    def test_has_frameless_dialog_selector(self) -> None:
+        template = _get_template()
+        assert "QDialog#framelessDialog" in template
+
+    def test_has_dialog_frame_and_content_rules(self) -> None:
+        template = _get_template()
+        assert "#dialogFrame" in template
+        assert "#dialogContent" in template

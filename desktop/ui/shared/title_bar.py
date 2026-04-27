@@ -193,8 +193,6 @@ class DialogTitleBar(QFrame):
         self._title.setText(title)
 
     def mousePressEvent(self, event):
-        if sys.platform == "win32":
-            return
         if event.button() == Qt.MouseButton.LeftButton:
             self._drag_pos = (
                 event.globalPosition().toPoint() - self.window().frameGeometry().topLeft()
@@ -204,8 +202,6 @@ class DialogTitleBar(QFrame):
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if sys.platform == "win32":
-            return
         if self._drag_pos is not None and event.buttons() & Qt.MouseButton.LeftButton:
             self.window().move(event.globalPosition().toPoint() - self._drag_pos)
             event.accept()
@@ -213,7 +209,5 @@ class DialogTitleBar(QFrame):
             super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        if sys.platform == "win32":
-            return
         self._drag_pos = None
         super().mouseReleaseEvent(event)
