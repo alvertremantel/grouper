@@ -1,6 +1,6 @@
 """ServerRunner — manages the lifecycle of sync server + web server.
 
-Both the TUI and headless mode use this class. It owns the sync server
+Both the headless mode uses this class. It owns the sync server
 (async) and the Flask web server (daemon thread).
 """
 
@@ -15,8 +15,8 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .sync.discovery import SyncAdvertiser
-    from .sync.server import SyncServer
+    from grouper_sync.discovery import SyncAdvertiser
+    from grouper_sync.server import SyncServer
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +68,7 @@ class ServerRunner:
         """Start the async TCP sync server."""
 
         from grouper_core.database.connection import get_database_path
-
-        from .sync.server import SyncServer
+        from grouper_sync.server import SyncServer
 
         db_path = get_database_path()
         self._sync_server = SyncServer(
@@ -100,7 +99,7 @@ class ServerRunner:
             try:
                 import socket
 
-                from .sync.discovery import SyncAdvertiser
+                from grouper_sync.discovery import SyncAdvertiser
 
                 self._advertiser = SyncAdvertiser(
                     device_id=device_id,
@@ -118,7 +117,7 @@ class ServerRunner:
             return
 
         try:
-            from .web import start_web_server
+            from server.web import start_web_server
 
             start_web_server(
                 self.config.web_port,

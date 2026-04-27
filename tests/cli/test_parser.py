@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from cli.main import build_parser
 
 

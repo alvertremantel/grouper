@@ -17,13 +17,9 @@ sync = [
 web = [
     "flask>=3.0",
 ]
-tui = [
-    "textual>=0.50",
-]
 server = [
     "flask>=3.0",
     "zeroconf>=0.131",
-    "textual>=0.50",
 ]
 test = [
     "pytest>=8.0",
@@ -40,14 +36,14 @@ markers = [
 addopts = "-v --tb=short --strict-markers"
 
 [tool.setuptools.packages.find]
-include = ["desktop*", "grouper_core*", "cli*", "grouper_server*"]
+include = ["desktop*", "grouper_core*", "cli*", "server*", "grouper_sync*"]
 
 [project.gui-scripts]
 grouper = "desktop.main:main"
 
 [project.scripts]
 grouper-cli = "cli.main:main"
-grouper-server = "grouper_server.__main__:main"
+grouper-server = "server.__main__:main"
 
 [build-system]
 requires = ["setuptools>=68.0"]
@@ -59,7 +55,7 @@ dev = []
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-src = ["desktop", "grouper_core", "cli", "grouper_server", "tests"]
+src = ["desktop", "grouper_core", "cli", "server", "grouper_sync", "tests"]
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "I", "UP", "B", "SIM", "RUF", "PT"]

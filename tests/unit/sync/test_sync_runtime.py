@@ -60,7 +60,7 @@ class _Writer:
 
 
 def test_open_sync_connection_classifies_database_open_failure(monkeypatch, tmp_path):
-    from grouper_server.sync.runtime import SyncPhaseError, open_sync_connection
+    from grouper_sync.runtime import SyncPhaseError, open_sync_connection
 
     def _fail_connect(_db_path: str) -> sqlite3.Connection:
         raise OSError(121, "The semaphore timeout period has expired")
@@ -74,7 +74,7 @@ def test_open_sync_connection_classifies_database_open_failure(monkeypatch, tmp_
 
 
 def test_open_sync_connection_classifies_wal_failure(monkeypatch, tmp_path):
-    from grouper_server.sync.runtime import SyncPhaseError, format_sync_error, open_sync_connection
+    from grouper_sync.runtime import SyncPhaseError, format_sync_error, open_sync_connection
 
     def _connect(_db_path: str) -> _FakeConnection:
         return _FakeConnection(wal_exc=OSError(121, "The semaphore timeout period has expired"))
@@ -91,8 +91,8 @@ def test_open_sync_connection_classifies_wal_failure(monkeypatch, tmp_path):
 
 def test_sync_with_peer_classifies_connect_failure(monkeypatch):
     from desktop.database.connection import get_database_path
-    from grouper_server.sync.client import sync_with_peer
-    from grouper_server.sync.runtime import SyncPhaseError, format_sync_error
+    from grouper_sync.client import sync_with_peer
+    from grouper_sync.runtime import SyncPhaseError, format_sync_error
 
     async def _fail_open_connection(*args, **kwargs):
         _ = args, kwargs
@@ -110,7 +110,7 @@ def test_sync_with_peer_classifies_connect_failure(monkeypatch):
 
 def test_sync_with_peer_uses_happy_eyeballs_for_hostname(monkeypatch):
     from desktop.database.connection import get_database_path
-    from grouper_server.sync.client import sync_with_peer
+    from grouper_sync.client import sync_with_peer
 
     captured_args: tuple[object, ...] | None = None
     captured_kwargs: dict[str, object] | None = None
@@ -142,10 +142,10 @@ def test_sync_with_peer_uses_happy_eyeballs_for_hostname(monkeypatch):
 
 def test_do_sync_classifies_stream_read_failure():
     from desktop.database.connection import get_connection, get_database_path
-    from grouper_server.sync import protocol as proto
-    from grouper_server.sync.client import _do_sync
-    from grouper_server.sync.device import get_or_create_device_id
-    from grouper_server.sync.runtime import SyncPhaseError
+    from grouper_sync import protocol as proto
+    from grouper_sync.client import _do_sync
+    from grouper_sync.device import get_or_create_device_id
+    from grouper_sync.runtime import SyncPhaseError
 
     with get_connection() as conn:
         device_id = get_or_create_device_id(conn)
@@ -175,16 +175,16 @@ def test_do_sync_classifies_stream_read_failure():
 
 def test_do_sync_classifies_apply_failure(monkeypatch):
     from desktop.database.connection import get_connection, get_database_path
-    from grouper_server.sync import protocol as proto
-    from grouper_server.sync.client import _do_sync
-    from grouper_server.sync.device import get_or_create_device_id
-    from grouper_server.sync.runtime import SyncPhaseError
+    from grouper_sync import protocol as proto
+    from grouper_sync.client import _do_sync
+    from grouper_sync.device import get_or_create_device_id
+    from grouper_sync.runtime import SyncPhaseError
 
     def _fail_apply(*args, **kwargs):
         _ = args, kwargs
         raise OSError(121, "The semaphore timeout period has expired")
 
-    monkeypatch.setattr("grouper_server.sync.client.apply_changes", _fail_apply)
+    monkeypatch.setattr("grouper_sync.client.apply_changes", _fail_apply)
 
     with get_connection() as conn:
         device_id = get_or_create_device_id(conn)

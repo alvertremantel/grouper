@@ -7,8 +7,8 @@ from datetime import datetime
 
 from flask import Flask, current_app, jsonify, redirect, render_template, url_for
 
-from .css import get_css
-from .rendering import (
+from .assets.css import get_css
+from .views.rendering import (
     due_span,
     fmt_hours,
     fmt_seconds,

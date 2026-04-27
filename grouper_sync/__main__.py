@@ -1,5 +1,5 @@
 """
-Entry point: python -m grouper_server.sync
+Entry point: python -m grouper_sync
 
 Commands:
     serve [--host HOST] [--port PORT]   Start the sync server
@@ -112,7 +112,7 @@ def _cmd_serve(args: argparse.Namespace) -> None:
             advertiser.start()
 
         print(f"Sync server running on {args.host}:{port}")
-        print(f"Device: {server._device_id[:8]}...")
+        print(f"Device: {server.device_id[:8]}...")
         print("Press Ctrl+C to stop")
 
         try:

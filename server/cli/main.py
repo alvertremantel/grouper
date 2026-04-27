@@ -1,8 +1,8 @@
 """
-Entry point: python -m grouper_server
+Entry point: python -m server
 
 Commands:
-    serve   Start sync + web servers (with TUI if available)
+    serve   Start sync + web servers
     connect One-shot sync with a peer
     status  Show sync status
     web     Start only the web server
@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from grouper_core.database.connection import get_database_path, init_database
 
 if TYPE_CHECKING:
-    from grouper_server.runner import ServerRunner
+    from server.runtime.runner import ServerRunner
 
 
 def main() -> None:
@@ -68,11 +68,6 @@ def main() -> None:
         "--no-web",
         action="store_true",
         help="Disable web server",
-    )
-    serve_p.add_argument(
-        "--no-tui",
-        action="store_true",
-        help="Disable TUI (log to terminal instead)",
     )
     serve_p.add_argument(
         "--behind-proxy",
@@ -139,7 +134,7 @@ def main() -> None:
 
 
 def _cmd_serve(args: argparse.Namespace) -> None:
-    from grouper_server.runner import ServerConfig, ServerRunner
+    from server.runtime.runner import ServerConfig, ServerRunner
 
     config = ServerConfig(
         sync_host=args.host,
@@ -153,28 +148,12 @@ def _cmd_serve(args: argparse.Namespace) -> None:
     )
     runner = ServerRunner(config)
 
-    # Try TUI mode first
-    if not args.no_tui and sys.stdout.isatty():
-        try:
-            from grouper_server.tui import HAS_TEXTUAL
-
-            if HAS_TEXTUAL:
-                from grouper_server.tui.app import ServerTUI
-
-                app = ServerTUI(runner=runner)
-                app.run()
-                return
-        except Exception:
-            logging.getLogger(__name__).warning(
-                "TUI failed to start — falling back to headless mode"
-            )
-
-    # Headless mode
+    # Headless mode only (TUI removed)
     _cmd_serve_headless(runner)
 
 
 def _cmd_serve_headless(runner: ServerRunner) -> None:
-    """Run servers with plain logging output (no TUI)."""
+    """Run servers with plain logging output."""
 
     async def run() -> None:
         runner.start_web()
@@ -182,7 +161,10 @@ def _cmd_serve_headless(runner: ServerRunner) -> None:
 
         s = runner.status
         print(f"Sync server running on {s.sync_host}:{s.sync_port}")
-        print(f"Device: {s.sync_device_id[:8]}...")
+        if s.sync_device_id:
+            print(f"Device: {s.sync_device_id[:8]}...")
+        else:
+            print("Device: (unknown)")
         if s.web_running:
             print(f"Web server running at http://{runner.config.web_host}:{s.web_port}")
         print("Press Ctrl+C to stop")
@@ -201,9 +183,9 @@ def _cmd_serve_headless(runner: ServerRunner) -> None:
 
 
 def _cmd_connect(args: argparse.Namespace) -> None:
-    from grouper_server.sync.changelog import ensure_triggers
-    from grouper_server.sync.client import sync_with_peer
-    from grouper_server.sync.device import enable_cdc
+    from grouper_sync.changelog import ensure_triggers
+    from grouper_sync.client import sync_with_peer
+    from grouper_sync.device import enable_cdc
 
     host, _, port_str = args.address.rpartition(":")
     if not host or not port_str:
@@ -291,7 +273,7 @@ def _cmd_web(args: argparse.Namespace) -> None:
     """Start only the web server (blocking)."""
     import time
 
-    from grouper_server.web import start_web_server
+    from server.web import start_web_server
 
     start_web_server(
         args.port,

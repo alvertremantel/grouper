@@ -5,7 +5,7 @@ Serves live HTML panels on http://localhost:<port>/ that mirror the Qt UI tabs.
 Started as a daemon thread so it exits automatically when the main process exits.
 
 This module is intentionally desktop-local. The standalone server package keeps
-its own Flask-based web dashboard under ``grouper_server.web``.
+its own Flask-based web dashboard under ``server.web``.
 
 Routes:
     GET /                → redirect to /dashboard

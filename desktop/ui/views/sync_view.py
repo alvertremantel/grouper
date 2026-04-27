@@ -38,7 +38,7 @@ from ...database.connection import get_connection, get_database_path, get_notifi
 from ..shared.widgets import ThemedSpinBox, clear_layout
 
 if TYPE_CHECKING:
-    from grouper_server.sync.discovery import Peer, SyncBrowser
+    from grouper_sync.discovery import Peer, SyncBrowser
 
 log = logging.getLogger(__name__)
 
@@ -72,8 +72,8 @@ class SyncServerWorker(QThread):
         self._stop_event: asyncio.Event | None = None
 
     def run(self) -> None:
-        from grouper_server.sync.runtime import SyncPhaseError, format_sync_error
-        from grouper_server.sync.server import SyncServer
+        from grouper_sync.runtime import SyncPhaseError, format_sync_error
+        from grouper_sync.server import SyncServer
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -104,7 +104,7 @@ class SyncServerWorker(QThread):
         advertiser = None
         if self._enable_mdns:
             try:
-                from grouper_server.sync.discovery import SyncAdvertiser
+                from grouper_sync.discovery import SyncAdvertiser
 
                 advertiser = SyncAdvertiser(
                     device_id=server.device_id,
@@ -151,8 +151,8 @@ class SyncClientWorker(QThread):
         self._stop_event: asyncio.Event | None = None
 
     def run(self) -> None:
-        from grouper_server.sync.client import sync_with_peer
-        from grouper_server.sync.runtime import (
+        from grouper_sync.client import sync_with_peer
+        from grouper_sync.runtime import (
             SyncPhaseError,
             format_sync_error,
             prepare_local_sync_database,
@@ -343,7 +343,7 @@ class SyncView(QWidget):
         self._port_spin.setValue(cfg.sync_port)
         form.addRow("Port:", self._port_spin)
 
-        from grouper_server.sync.discovery import HAS_ZEROCONF
+        from grouper_sync.discovery import HAS_ZEROCONF
 
         self._mdns_cb = QCheckBox("Enable mDNS advertisement")
         self._mdns_cb.setChecked(cfg.sync_mdns_enabled)
@@ -417,7 +417,7 @@ class SyncView(QWidget):
         parent_layout.addWidget(group)
 
     def _build_discovery_section(self, parent_layout: QVBoxLayout) -> None:
-        from grouper_server.sync.discovery import HAS_ZEROCONF
+        from grouper_sync.discovery import HAS_ZEROCONF
 
         if not HAS_ZEROCONF:
             hint = QLabel("Install zeroconf for automatic LAN peer discovery.")
@@ -683,7 +683,7 @@ class SyncView(QWidget):
 
     @staticmethod
     def _has_zeroconf() -> bool:
-        from grouper_server.sync.discovery import HAS_ZEROCONF
+        from grouper_sync.discovery import HAS_ZEROCONF
 
         return HAS_ZEROCONF
 
@@ -779,7 +779,7 @@ class SyncView(QWidget):
         if not self._has_zeroconf():
             return
         try:
-            from grouper_server.sync.discovery import SyncBrowser
+            from grouper_sync.discovery import SyncBrowser
 
             browser = SyncBrowser(device_id)
             if browser.start():

@@ -8,8 +8,8 @@ from pathlib import Path
 
 
 def test_sync_round_trip_converges_two_databases(tmp_path: Path) -> None:
-    from grouper_server.sync.client import sync_with_peer
-    from grouper_server.sync.server import SyncServer
+    from grouper_sync.client import sync_with_peer
+    from grouper_sync.server import SyncServer
 
     server_db = tmp_path / "server.db"
     client_db = tmp_path / "client.db"
@@ -37,9 +37,9 @@ def test_sync_round_trip_converges_two_databases(tmp_path: Path) -> None:
 
 
 def test_large_batch_sync_over_10000_changes(tmp_path: Path) -> None:
-    from grouper_server.sync.changelog import DEFAULT_PAGE_SIZE
-    from grouper_server.sync.client import sync_with_peer
-    from grouper_server.sync.server import SyncServer
+    from grouper_sync.changelog import DEFAULT_PAGE_SIZE
+    from grouper_sync.client import sync_with_peer
+    from grouper_sync.server import SyncServer
 
     server_db = tmp_path / "server.db"
     client_db = tmp_path / "client.db"
@@ -74,9 +74,9 @@ def test_large_batch_sync_over_10000_changes(tmp_path: Path) -> None:
 
 
 def test_sync_resume_after_partial_catchup(tmp_path: Path) -> None:
-    from grouper_server.sync.changelog import DEFAULT_PAGE_SIZE
-    from grouper_server.sync.client import sync_with_peer
-    from grouper_server.sync.server import SyncServer
+    from grouper_sync.changelog import DEFAULT_PAGE_SIZE
+    from grouper_sync.client import sync_with_peer
+    from grouper_sync.server import SyncServer
 
     server_db = tmp_path / "server.db"
     client_db = tmp_path / "client.db"
@@ -112,10 +112,10 @@ def test_sync_resume_after_partial_catchup(tmp_path: Path) -> None:
 
 
 def _init_sync_database(db_path: Path) -> None:
-    import desktop.database.connection as conn_mod
-    from desktop.database.connection import register_sqlite_functions
-    from grouper_server.sync.changelog import ensure_triggers
-    from grouper_server.sync.device import enable_cdc
+    import grouper_core.database.connection as conn_mod
+    from grouper_core.database.connection import register_sqlite_functions
+    from grouper_sync.changelog import ensure_triggers
+    from grouper_sync.device import enable_cdc
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -130,7 +130,7 @@ def _init_sync_database(db_path: Path) -> None:
 
 
 def _insert_activity(db_path: Path, *, name: str, row_uuid: str) -> None:
-    from desktop.database.connection import register_sqlite_functions
+    from grouper_core.database.connection import register_sqlite_functions
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row

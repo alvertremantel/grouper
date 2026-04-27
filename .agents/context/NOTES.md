@@ -7,7 +7,8 @@ Offline-first productivity app with a PySide6 desktop UI, SQLite storage, CLI to
 - `desktop/`: PySide6 desktop app; installed GUI command remains `grouper`.
 - `grouper_core/`: shared models, config, formatting, operations, DB, migrations, and colors.
 - `cli/`: CLI tools.
-- `grouper_server/`: sync server and web dashboard.
+- `grouper_sync/`: LAN sync package shared by desktop and server; must not import `desktop` or `server`.
+- `server/`: standalone sync + web server package; installed command remains `grouper-server`.
 - `installer/`: Windows installer.
 
 ## Quick Commands
@@ -17,7 +18,7 @@ uv sync --all-extras
 uv run grouper
 uv run grouper-cli
 uv run grouper-server serve
-uv run pytest
+uv run pytest <specific test group>
 uv run ruff check desktop tests
 ```
 
@@ -32,7 +33,10 @@ uv run ruff check desktop tests
 - Main local data lives under `~/.grouper/`.
 - Tests isolate DB and config paths via the root autouse fixture in `tests/conftest.py`; no test should write to `~/.grouper/`.
 - Database `db_path.txt` persistence must use `grouper_core.config.APP_DIR`; do not add separate `Path.home() / ".grouper"` config paths in database modules.
-- The sync legacy entrypoint (`grouper_server/sync/__main__.py`) has no import-time `init_database()` side effect; DB init happens inside `main()`.
+- Do not run the full test suite as one monolithic command in this repo during this session. It is unreliable in this environment; run test groups separately instead.
+- Do not create root-level `STATUS.md` or `NOTES.md`; keep status/notes under `.agents/context/` only.
+- The sync entrypoint (`grouper_sync/__main__.py`) has no import-time `init_database()` side effect; DB init happens inside `main()`.
+- No `grouper_server` compatibility shim should be reintroduced; use `grouper_sync.*` for sync and `server.*` for server/web/runtime code.
 - For Qt visual bugs, prefer testing the exact shown widget hierarchy over `widget.grab()` alone.
 - Frameless top-level dialog translucency is suspect; keep dialog frame/content styled and opaque.
 - Parent card selectors such as `#card QWidget { background-color: transparent; }` can bleed into parented dialogs; dialog selectors need enough specificity to preserve painted surfaces.
