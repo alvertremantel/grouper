@@ -5,5 +5,3 @@ Sync functionality has been moved to grouper_sync.
 
 No cloud. No subscriptions. Just your machines talking to each other.
 """
-
-__version__ = "0.1.0"

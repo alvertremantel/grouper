@@ -24,7 +24,7 @@ uv run ruff check desktop tests
 
 ## Durable Notes
 
-- Python imports for the desktop app are now `desktop.*`; do not reintroduce `grouper.*` as a Python package import.
+- Python imports for the desktop app are `desktop.*`; do not reintroduce `grouper.*` as a Python package import.
 - The distribution/project name and GUI executable remain `grouper`; `[project.gui-scripts] grouper = "desktop.main:main"` is intentional.
 - `desktop/ui/shared/` contains reusable UI infrastructure: base cards/dialogs, title bar, animation stack/card, icons, widgets, view models, splash.
 - Feature UI modules live under `desktop/ui/time/`, `desktop/ui/tasks/`, `desktop/ui/calendar/`, and `desktop/ui/views/`.
@@ -37,9 +37,10 @@ uv run ruff check desktop tests
 - Do not create root-level `STATUS.md` or `NOTES.md`; keep status/notes under `.agents/context/` only.
 - The sync entrypoint (`grouper_sync/__main__.py`) has no import-time `init_database()` side effect; DB init happens inside `main()`.
 - No `grouper_server` compatibility shim should be reintroduced; use `grouper_sync.*` for sync and `server.*` for server/web/runtime code.
+- `grouper_sync` prog name is `grouper-sync`; `server` prog name is `grouper-server`. They are separate entry points.
+- When monkeypatching module-level functions, prefer `monkeypatch.setattr(mod_obj, "attr", ...)` over the dotted-path string form if any test in the same file manipulates `sys.modules`. The dotted-path form can resolve to a stale module object after a `sys.modules` swap.
 - For Qt visual bugs, prefer testing the exact shown widget hierarchy over `widget.grab()` alone.
-- Frameless top-level dialog translucency is suspect; keep dialog frame/content styled and opaque.
-- Parent card selectors such as `#card QWidget { background-color: transparent; }` can bleed into parented dialogs; dialog selectors need enough specificity to preserve painted surfaces.
+- Frameless top-level dialog translucency is suspect; keep dialog/frame content styled and opaque.
 - See `.agents/context/qt-pitfalls.md` for the full dialog-contrast postmortem.
 
 ## Installer Notes

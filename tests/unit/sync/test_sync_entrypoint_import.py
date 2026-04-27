@@ -33,15 +33,16 @@ def test_import_does_not_call_init_database():
 
 
 def test_main_calls_init_database_once(monkeypatch):
-    from grouper_sync.__main__ import main
+    import grouper_sync.__main__ as mod
 
     calls: list[object] = []
-    monkeypatch.setattr(
-        "grouper_sync.__main__.init_database",
-        lambda: calls.append(None),
-    )
-    monkeypatch.setattr(sys, "argv", ["grouper-server"])
+    # Patch the module object directly (not via dotted-path string) so the
+    # patch always targets whatever module object is currently in
+    # sys.modules — the preceding test swaps sys.modules entries which can
+    # leave the dotted-path resolver pointing at a stale object.
+    monkeypatch.setattr(mod, "init_database", lambda: calls.append(None))
+    monkeypatch.setattr(sys, "argv", ["grouper-sync"])
 
-    main()
+    mod.main()
 
     assert len(calls) == 1

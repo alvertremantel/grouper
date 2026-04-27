@@ -21,7 +21,7 @@ def main() -> None:
     init_database()
 
     parser = argparse.ArgumentParser(
-        prog="grouper-server",
+        prog="grouper-sync",
         description="Grouper LAN Sync — sync your data between devices",
     )
     parser.add_argument(
@@ -138,6 +138,22 @@ def _cmd_connect(args: argparse.Namespace) -> None:
         print(f"Invalid address: {args.address!r} (expected HOST:PORT)", file=sys.stderr)
         sys.exit(1)
 
+    try:
+        port = int(port_str)
+    except ValueError:
+        print(
+            f"Invalid port: {port_str!r} in address {args.address!r} (port must be an integer)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    if not (1 <= port <= 65535):
+        print(
+            f"Invalid port {port} in address {args.address!r} (must be 1-65535)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     db_path = get_database_path()
 
     # Ensure triggers are set up
@@ -155,7 +171,7 @@ def _cmd_connect(args: argparse.Namespace) -> None:
         conn.close()
 
     async def run() -> dict:
-        return await sync_with_peer(db_path, host, int(port_str))
+        return await sync_with_peer(db_path, host, port)
 
     result = asyncio.run(run())
     print(f"Sync complete: sent {result['sent']}, received {result['received']} changes")
@@ -180,7 +196,7 @@ def _cmd_status() -> None:
 
         row = conn.execute("SELECT * FROM sync_state WHERE id = 1").fetchone()
         if row:
-            print(f"Device ID:  {row['device_id'][:8]}...")
+            print(f"Device ID:  {(row['device_id'] or '')[:8]}...")
             print(f"CDC active: {'yes' if not row['syncing'] else 'suppressed'}")
         else:
             print("Sync not initialized. Run 'serve' or 'connect' first.")
@@ -196,8 +212,8 @@ def _cmd_status() -> None:
             print(f"\nKnown peers ({len(peers)}):")
             for p in peers:
                 print(
-                    f"  {p['peer_name'] or 'unknown'} ({p['peer_device_id'][:8]}...) "
-                    f"— last sync: {p['last_sync_at'] or 'never'}, "
+                    f"  {p['peer_name'] or 'unknown'} ({(p['peer_device_id'] or '')[:8]}...) "
+                    f"-- last sync: {p['last_sync_at'] or 'never'}, "
                     f"hwm: {p['last_changelog_id']}"
                 )
         else:
