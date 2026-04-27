@@ -14,7 +14,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from grouper.config import Config, ConfigManager
+from desktop.config import Config, ConfigManager
 from grouper_install.setup import (
     _create_desktop_shortcut,
     _create_shortcut,
@@ -140,9 +140,9 @@ class TestConfigFirstRun:
     def test_creates_config_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         fake_app = tmp_path / ".grouper"
         fake_cfg = fake_app / "config.json"
-        monkeypatch.setattr("grouper.config.APP_DIR", fake_app)
-        monkeypatch.setattr("grouper.config.CONFIG_FILE", fake_cfg)
-        monkeypatch.setattr("grouper.config.ConfigManager._instance", None)
+        monkeypatch.setattr("desktop.config.APP_DIR", fake_app)
+        monkeypatch.setattr("desktop.config.CONFIG_FILE", fake_cfg)
+        monkeypatch.setattr("desktop.config.ConfigManager._instance", None)
 
         ConfigManager()
         assert fake_cfg.exists()
@@ -153,9 +153,9 @@ class TestConfigFirstRun:
     def test_creates_data_directories(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         fake_app = tmp_path / ".grouper"
         fake_cfg = fake_app / "config.json"
-        monkeypatch.setattr("grouper.config.APP_DIR", fake_app)
-        monkeypatch.setattr("grouper.config.CONFIG_FILE", fake_cfg)
-        monkeypatch.setattr("grouper.config.ConfigManager._instance", None)
+        monkeypatch.setattr("desktop.config.APP_DIR", fake_app)
+        monkeypatch.setattr("desktop.config.CONFIG_FILE", fake_cfg)
+        monkeypatch.setattr("desktop.config.ConfigManager._instance", None)
 
         mgr = ConfigManager()
         cfg = mgr.config
@@ -194,9 +194,9 @@ class TestConfigFirstRun:
             )
         )
 
-        monkeypatch.setattr("grouper.config.APP_DIR", fake_app)
-        monkeypatch.setattr("grouper.config.CONFIG_FILE", fake_cfg)
-        monkeypatch.setattr("grouper.config.ConfigManager._instance", None)
+        monkeypatch.setattr("desktop.config.APP_DIR", fake_app)
+        monkeypatch.setattr("desktop.config.CONFIG_FILE", fake_cfg)
+        monkeypatch.setattr("desktop.config.ConfigManager._instance", None)
 
         mgr = ConfigManager()
         assert mgr.config.theme == "sage"
@@ -212,9 +212,9 @@ class TestConfigFirstRun:
         fake_cfg = fake_app / "config.json"
         fake_cfg.write_text("not valid json {{")
 
-        monkeypatch.setattr("grouper.config.APP_DIR", fake_app)
-        monkeypatch.setattr("grouper.config.CONFIG_FILE", fake_cfg)
-        monkeypatch.setattr("grouper.config.ConfigManager._instance", None)
+        monkeypatch.setattr("desktop.config.APP_DIR", fake_app)
+        monkeypatch.setattr("desktop.config.CONFIG_FILE", fake_cfg)
+        monkeypatch.setattr("desktop.config.ConfigManager._instance", None)
 
         mgr = ConfigManager()
         assert mgr.config.theme == "dark"

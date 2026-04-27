@@ -6,7 +6,7 @@ import re
 from typing import ClassVar
 
 import pytest
-from grouper.styles import _THEME_PALETTE, _get_template
+from desktop.styles import _THEME_PALETTE, _get_template
 
 _HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 _TOKEN_RE = re.compile(r"\{\{([\w-]+)\}\}")

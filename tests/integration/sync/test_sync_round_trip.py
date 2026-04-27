@@ -112,8 +112,8 @@ def test_sync_resume_after_partial_catchup(tmp_path: Path) -> None:
 
 
 def _init_sync_database(db_path: Path) -> None:
-    import grouper.database.connection as conn_mod
-    from grouper.database.connection import register_sqlite_functions
+    import desktop.database.connection as conn_mod
+    from desktop.database.connection import register_sqlite_functions
     from grouper_server.sync.changelog import ensure_triggers
     from grouper_server.sync.device import enable_cdc
 
@@ -130,7 +130,7 @@ def _init_sync_database(db_path: Path) -> None:
 
 
 def _insert_activity(db_path: Path, *, name: str, row_uuid: str) -> None:
-    from grouper.database.connection import register_sqlite_functions
+    from desktop.database.connection import register_sqlite_functions
 
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row

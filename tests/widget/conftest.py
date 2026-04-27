@@ -32,12 +32,12 @@ def main_window(qapp: QApplication):
     cfg.animations_enabled = False
 
     with (
-        patch("grouper.app.get_config", return_value=cfg),
-        patch("grouper.app.theme_colors", return_value={"window-border": "#7aa2f7"}),
-        patch("grouper.ui.sidebar.get_config", return_value=cfg),
-        patch("grouper.ui.animated_stack.get_config", return_value=cfg),
+        patch("desktop.app.get_config", return_value=cfg),
+        patch("desktop.app.theme_colors", return_value={"window-border": "#7aa2f7"}),
+        patch("desktop.ui.views.sidebar.get_config", return_value=cfg),
+        patch("desktop.ui.shared.animated_stack.get_config", return_value=cfg),
     ):
-        from grouper.app import MainWindow
+        from desktop.app import MainWindow
 
         win = MainWindow()
         yield win

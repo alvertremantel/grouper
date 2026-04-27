@@ -277,7 +277,7 @@ class TestValidateTable:
 
 class TestValidateColumns:
     def test_valid_columns_pass(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import _validate_columns
 
         with get_connection() as conn:
@@ -285,14 +285,14 @@ class TestValidateColumns:
             assert result == ["name"]
 
     def test_invalid_column_raises(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import _validate_columns
 
         with get_connection() as conn, pytest.raises(ValueError, match="Invalid columns"):
             _validate_columns(conn, "activities", ["nonexistent_col"])
 
     def test_mixed_valid_invalid_raises(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import _validate_columns
 
         with get_connection() as conn, pytest.raises(ValueError, match="Invalid columns"):
@@ -306,7 +306,7 @@ class TestValidateColumns:
 
 class TestDeviceId:
     def test_get_or_create_returns_nonempty_string(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.device import get_or_create_device_id
 
         with get_connection() as conn:
@@ -315,7 +315,7 @@ class TestDeviceId:
             assert len(device_id) > 0
 
     def test_get_or_create_is_stable(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.device import get_or_create_device_id
 
         with get_connection() as conn:
@@ -324,7 +324,7 @@ class TestDeviceId:
             assert first == second
 
     def test_device_id_is_hex_uuid(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.device import get_or_create_device_id
 
         with get_connection() as conn:
@@ -335,7 +335,7 @@ class TestDeviceId:
 
 class TestCdcSuppression:
     def test_suppress_sets_syncing_flag(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.device import get_or_create_device_id, suppress_cdc
 
         with get_connection() as conn:
@@ -345,7 +345,7 @@ class TestCdcSuppression:
             assert row["syncing"] == 1
 
     def test_unsuppress_clears_syncing_flag(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.device import get_or_create_device_id, suppress_cdc, unsuppress_cdc
 
         with get_connection() as conn:
@@ -358,7 +358,7 @@ class TestCdcSuppression:
 
 class TestBootstrapAndApplyTransactions:
     def test_apply_changes_auto_commit_false_leaves_changes_uncommitted_until_finalize(self):
-        from grouper.database.connection import get_connection, get_database_path
+        from desktop.database.connection import get_connection, get_database_path
         from grouper_server.sync.changelog import ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
         from grouper_server.sync.sync_ops import apply_changes, finish_apply_changes, set_peer_hwm
@@ -427,7 +427,7 @@ class TestBootstrapAndApplyTransactions:
                 observer.close()
 
     def test_bootstrap_marks_complete_in_final_table_commit(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.bootstrap import snapshot_for_bootstrap
         from grouper_server.sync.device import get_or_create_device_id
         from grouper_server.sync.schema import INSERT_ORDER, SYNCED_TABLES
@@ -492,7 +492,7 @@ class TestDeviceName:
 
 class TestCdcTriggerInsert:
     def test_insert_creates_changelog_entry(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -514,7 +514,7 @@ class TestCdcTriggerInsert:
 
 class TestCdcTriggerUpdate:
     def test_update_creates_changelog_entry(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -545,7 +545,7 @@ class TestCdcTriggerUpdate:
 
 class TestCdcTriggerDelete:
     def test_delete_creates_changelog_entry(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -574,7 +574,7 @@ class TestCdcTriggerDelete:
 
 class TestCdcSuppressTriggers:
     def test_suppressed_changes_do_not_create_changelog(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id, suppress_cdc
 
@@ -594,7 +594,7 @@ class TestCdcSuppressTriggers:
             assert len(rows) == 0
 
     def test_unsuppress_restores_changelog_recording(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers
         from grouper_server.sync.device import (
             get_or_create_device_id,
@@ -686,7 +686,7 @@ def _setup_fk_test_data(conn):
 
 class TestResolveFksToUuids:
     def test_session_activity_name_unchanged(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import resolve_fks_to_uuids
 
         with get_connection() as conn:
@@ -703,7 +703,7 @@ class TestResolveFksToUuids:
             assert "activity_name_uuid" not in result
 
     def test_task_project_id_resolved_to_uuid(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import resolve_fks_to_uuids
 
         with get_connection() as conn:
@@ -719,7 +719,7 @@ class TestResolveFksToUuids:
             assert result["project_id_uuid"] == "proj_uuid_bbb"
 
     def test_fk_target_missing_sets_uuid_to_none(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import resolve_fks_to_uuids
 
         with get_connection() as conn:
@@ -735,7 +735,7 @@ class TestResolveFksToUuids:
             assert result["project_id_uuid"] is None
 
     def test_empty_payload_returns_empty(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import resolve_fks_to_uuids
 
         with get_connection() as conn:
@@ -747,7 +747,7 @@ class TestResolveFksToUuids:
 
 class TestResolveUuidsToFks:
     def test_project_id_uuid_mapped_to_integer(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import resolve_uuids_to_fks
 
         with get_connection() as conn:
@@ -763,7 +763,7 @@ class TestResolveUuidsToFks:
             assert result["project_id"] == data["project"]["id"]
 
     def test_nonexistent_uuid_raises_missing_parent(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import MissingParentError, resolve_uuids_to_fks
 
         with get_connection() as conn:
@@ -778,7 +778,7 @@ class TestResolveUuidsToFks:
                 resolve_uuids_to_fks(conn, "tasks", payload)
 
     def test_no_fk_fields_returns_unchanged(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import resolve_uuids_to_fks
 
         with get_connection() as conn:
@@ -794,7 +794,7 @@ class TestResolveUuidsToFks:
 
 class TestFkResolutionRoundTrip:
     def test_fks_to_uuids_to_fks_preserves_values(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import resolve_fks_to_uuids, resolve_uuids_to_fks
 
         with get_connection() as conn:
@@ -822,7 +822,7 @@ class TestFkResolutionRoundTrip:
 
 class TestApplyRemoteChangeTableInjection:
     def test_drop_table_injection_rejected(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -849,7 +849,7 @@ class TestApplyRemoteChangeTableInjection:
             assert row["cnt"] == 1
 
     def test_or_injection_rejected(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -876,7 +876,7 @@ class TestApplyRemoteChangeTableInjection:
             assert row["cnt"] == 1
 
     def test_database_intact_after_injection_attempts(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -919,14 +919,14 @@ class TestApplyRemoteChangeTableInjection:
 
 class TestGetFullTableStateInjection:
     def test_invalid_table_raises_valueerror(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import get_full_table_state
 
         with get_connection() as conn, pytest.raises(ValueError, match="Invalid sync table"):
             get_full_table_state(conn, "activities; DROP TABLE sessions; --")
 
     def test_or_injection_raises_valueerror(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import get_full_table_state
 
         with get_connection() as conn, pytest.raises(ValueError, match="Invalid sync table"):
@@ -935,7 +935,7 @@ class TestGetFullTableStateInjection:
 
 class TestColumnInjectionPrevention:
     def test_malicious_column_name_rejected(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -961,7 +961,7 @@ class TestColumnInjectionPrevention:
             assert row["cnt"] == 0
 
     def test_column_with_sql_comment_rejected(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -989,7 +989,7 @@ class TestColumnInjectionPrevention:
 
 class TestValidOperationsStillWork:
     def test_apply_remote_insert_activities(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1013,7 +1013,7 @@ class TestValidOperationsStillWork:
             assert row["name"] == "Valid Activity"
 
     def test_get_full_table_state_activities(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import (
             apply_remote_change,
             ensure_triggers,
@@ -1045,7 +1045,7 @@ class TestValidOperationsStillWork:
 
 class TestGetChangesSincePaged:
     def test_returns_page_within_limit(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers, get_changes_since_paged
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1067,7 +1067,7 @@ class TestGetChangesSincePaged:
             assert next_id == changes[-1]["id"]
 
     def test_returns_all_when_within_page(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers, get_changes_since_paged
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1087,7 +1087,7 @@ class TestGetChangesSincePaged:
             assert has_more is False
 
     def test_empty_result(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers, get_changes_since_paged
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1103,7 +1103,7 @@ class TestGetChangesSincePaged:
             assert next_id == 999999
 
     def test_second_page_picks_up_after_first(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers, get_changes_since_paged
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1134,7 +1134,7 @@ class TestGetChangesSincePaged:
             assert len(all_ids) == len(set(all_ids)), "No duplicate IDs across pages"
 
     def test_byte_budget_cap(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers, get_changes_since_paged
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1161,7 +1161,7 @@ class TestGetChangesSincePaged:
             assert total_bytes <= 8 * 1024 * 1024
 
     def test_device_id_filter(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers, get_changes_since_paged
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1202,7 +1202,7 @@ class TestProtocolVersion:
 
 class TestConflictConvergence:
     def test_newer_same_uuid_update_wins(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1245,7 +1245,7 @@ class TestConflictConvergence:
             assert row["sync_updated_by"] == "peer-b"
 
     def test_newer_tombstone_blocks_stale_resurrection(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1303,7 +1303,7 @@ class TestConflictConvergence:
             assert tombstone["sync_updated_by"] == "peer-b"
 
     def test_duplicate_tag_merges_and_aliases_future_references(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import (
             apply_remote_change,
             ensure_triggers,
@@ -1359,7 +1359,7 @@ class TestConflictConvergence:
             assert resolved["tag_id"] == tag_id
 
     def test_duplicate_project_records_conflict_without_abort(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
         from grouper_server.sync.sync_ops import apply_changes
@@ -1417,7 +1417,7 @@ class TestConflictConvergence:
             assert survivor["name"] == "Survivor"
 
     def test_remote_apply_advances_logical_clock_for_next_local_write(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1459,7 +1459,7 @@ class TestConflictConvergence:
             assert row["sync_version"] > 50
 
     def test_alias_delete_uses_canonical_tombstone_uuid(self):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync.changelog import apply_remote_change, ensure_triggers
         from grouper_server.sync.device import get_or_create_device_id
 
@@ -1523,7 +1523,7 @@ class TestConflictConvergence:
             assert tombstone["sync_version"] == 8
 
     def test_oversized_first_row_is_rejected(self, monkeypatch):
-        from grouper.database.connection import get_connection
+        from desktop.database.connection import get_connection
         from grouper_server.sync import changelog as changelog_mod
         from grouper_server.sync.changelog import (
             OversizedChangeError,

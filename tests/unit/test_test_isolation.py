@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import grouper.config as _app_cfg
+import desktop.config as _app_cfg
 import grouper_core.config as _cfg
 from grouper_core.config import ConfigManager, get_config
 from grouper_core.database import connection

@@ -36,7 +36,7 @@ def _seed_task(data_dir: Path) -> int:
 
 class TestDetectLinkType:
     def _fn(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         return detect_link_type
 
@@ -77,7 +77,7 @@ class TestDetectLinkType:
 class TestAddLink:
     def test_add_url_link(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link
+        from desktop.database.task_links import add_link
 
         link = add_link(task_id, "https://example.com", label="Example")
         assert link.id is not None
@@ -88,21 +88,21 @@ class TestAddLink:
 
     def test_add_file_link_auto_detects_type(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link
+        from desktop.database.task_links import add_link
 
         link = add_link(task_id, r"C:\notes.txt")
         assert link.link_type == "file"
 
     def test_blank_label_stored_as_none(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link
+        from desktop.database.task_links import add_link
 
         link = add_link(task_id, "https://example.com", label="   ")
         assert link.label is None
 
     def test_url_is_stripped(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link
+        from desktop.database.task_links import add_link
 
         link = add_link(task_id, "  https://example.com  ")
         assert link.url == "https://example.com"
@@ -111,13 +111,13 @@ class TestAddLink:
 class TestGetLinksForTask:
     def test_empty_when_no_links(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import get_links_for_task
+        from desktop.database.task_links import get_links_for_task
 
         assert get_links_for_task(task_id) == []
 
     def test_returns_added_links(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link, get_links_for_task
+        from desktop.database.task_links import add_link, get_links_for_task
 
         add_link(task_id, "https://a.com", label="A")
         add_link(task_id, "https://b.com", label="B")
@@ -145,7 +145,7 @@ class TestGetLinksForTask:
         conn.commit()
         conn.close()
 
-        from grouper.database.task_links import add_link, get_links_for_task
+        from desktop.database.task_links import add_link, get_links_for_task
 
         add_link(t1, "https://t1.com")
         add_link(t2, "https://t2.com")
@@ -157,7 +157,7 @@ class TestGetLinksForTask:
 class TestDeleteLink:
     def test_delete_removes_link(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link, delete_link, get_links_for_task
+        from desktop.database.task_links import add_link, delete_link, get_links_for_task
 
         link = add_link(task_id, "https://example.com")
         delete_link(link.id)
@@ -165,7 +165,7 @@ class TestDeleteLink:
 
     def test_delete_nonexistent_is_noop(self, isolated_db):
         _seed_task(isolated_db)
-        from grouper.database.task_links import delete_link
+        from desktop.database.task_links import delete_link
 
         delete_link(99999)  # should not raise
 
@@ -173,7 +173,7 @@ class TestDeleteLink:
 class TestUpdateLink:
     def test_update_url(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link, get_links_for_task, update_link
+        from desktop.database.task_links import add_link, get_links_for_task, update_link
 
         link = add_link(task_id, "https://old.com")
         update_link(link.id, url="https://new.com")
@@ -183,7 +183,7 @@ class TestUpdateLink:
 
     def test_update_label(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link, get_links_for_task, update_link
+        from desktop.database.task_links import add_link, get_links_for_task, update_link
 
         link = add_link(task_id, "https://example.com", label="Old")
         update_link(link.id, label="New Label")
@@ -192,7 +192,7 @@ class TestUpdateLink:
 
     def test_update_nothing_is_noop(self, isolated_db):
         task_id = _seed_task(isolated_db)
-        from grouper.database.task_links import add_link, get_links_for_task, update_link
+        from desktop.database.task_links import add_link, get_links_for_task, update_link
 
         link = add_link(task_id, "https://example.com", label="Stay")
         update_link(link.id)

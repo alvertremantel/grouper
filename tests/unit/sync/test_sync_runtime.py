@@ -90,7 +90,7 @@ def test_open_sync_connection_classifies_wal_failure(monkeypatch, tmp_path):
 
 
 def test_sync_with_peer_classifies_connect_failure(monkeypatch):
-    from grouper.database.connection import get_database_path
+    from desktop.database.connection import get_database_path
     from grouper_server.sync.client import sync_with_peer
     from grouper_server.sync.runtime import SyncPhaseError, format_sync_error
 
@@ -109,7 +109,7 @@ def test_sync_with_peer_classifies_connect_failure(monkeypatch):
 
 
 def test_sync_with_peer_uses_happy_eyeballs_for_hostname(monkeypatch):
-    from grouper.database.connection import get_database_path
+    from desktop.database.connection import get_database_path
     from grouper_server.sync.client import sync_with_peer
 
     captured_args: tuple[object, ...] | None = None
@@ -141,7 +141,7 @@ def test_sync_with_peer_uses_happy_eyeballs_for_hostname(monkeypatch):
 
 
 def test_do_sync_classifies_stream_read_failure():
-    from grouper.database.connection import get_connection, get_database_path
+    from desktop.database.connection import get_connection, get_database_path
     from grouper_server.sync import protocol as proto
     from grouper_server.sync.client import _do_sync
     from grouper_server.sync.device import get_or_create_device_id
@@ -174,7 +174,7 @@ def test_do_sync_classifies_stream_read_failure():
 
 
 def test_do_sync_classifies_apply_failure(monkeypatch):
-    from grouper.database.connection import get_connection, get_database_path
+    from desktop.database.connection import get_connection, get_database_path
     from grouper_server.sync import protocol as proto
     from grouper_server.sync.client import _do_sync
     from grouper_server.sync.device import get_or_create_device_id

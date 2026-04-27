@@ -40,10 +40,10 @@ markers = [
 addopts = "-v --tb=short --strict-markers"
 
 [tool.setuptools.packages.find]
-include = ["grouper*", "grouper_core*", "grouper_cli*", "grouper_server*"]
+include = ["desktop*", "grouper_core*", "grouper_cli*", "grouper_server*"]
 
 [project.gui-scripts]
-grouper = "grouper.main:main"
+grouper = "desktop.main:main"
 
 [project.scripts]
 grouper-cli = "grouper_cli.main:main"
@@ -59,7 +59,7 @@ dev = []
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-src = ["grouper", "grouper_core", "grouper_cli", "grouper_server", "tests"]
+src = ["desktop", "grouper_core", "grouper_cli", "grouper_server", "tests"]
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "I", "UP", "B", "SIM", "RUF", "PT"]
@@ -71,23 +71,23 @@ ignore = [
 "tests/**" = ["S101"]
 "**/__init__.py" = ["F401"]  # re-exports
 # Re-export shim modules: intentional star-imports and forwarded names
-"grouper/config.py" = ["F401", "F403"]
-"grouper/formatting.py" = ["F401", "F403"]
-"grouper/models.py" = ["F401", "F403"]
-"grouper/operations.py" = ["F401", "F403"]
-"grouper/styles/colors.py" = ["F401", "F403"]
-"grouper/database/activities.py" = ["F403"]
-"grouper/database/boards.py" = ["F403"]
-"grouper/database/calendars.py" = ["F403"]
-"grouper/database/connection.py" = ["F401"]
-"grouper/database/events.py" = ["F403"]
-"grouper/database/prerequisites.py" = ["F403"]
-"grouper/database/projects.py" = ["F403"]
-"grouper/database/sessions.py" = ["F403"]
-"grouper/database/settings.py" = ["F403"]
-"grouper/database/tags.py" = ["F403"]
-"grouper/database/task_links.py" = ["F403"]
-"grouper/database/tasks.py" = ["F403"]
+"desktop/config.py" = ["F401", "F403"]
+"desktop/formatting.py" = ["F401", "F403"]
+"desktop/models.py" = ["F401", "F403"]
+"desktop/operations.py" = ["F401", "F403"]
+"desktop/styles/colors.py" = ["F401", "F403"]
+"desktop/database/activities.py" = ["F403"]
+"desktop/database/boards.py" = ["F403"]
+"desktop/database/calendars.py" = ["F403"]
+"desktop/database/connection.py" = ["F401"]
+"desktop/database/events.py" = ["F403"]
+"desktop/database/prerequisites.py" = ["F403"]
+"desktop/database/projects.py" = ["F403"]
+"desktop/database/sessions.py" = ["F403"]
+"desktop/database/settings.py" = ["F403"]
+"desktop/database/tags.py" = ["F403"]
+"desktop/database/task_links.py" = ["F403"]
+"desktop/database/tasks.py" = ["F403"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"

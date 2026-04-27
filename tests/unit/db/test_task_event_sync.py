@@ -26,8 +26,8 @@ import pytest
 
 def _make_project(name: str = "Sync Test Project") -> int:
     """Create a default board + project and return the project id."""
-    import grouper.database.boards as _boards
-    import grouper.database.projects as _projects
+    import desktop.database.boards as _boards
+    import desktop.database.projects as _projects
 
     board = _boards.get_or_create_default_board()
     proj = _projects.create_project(name, board_id=board.id)
@@ -36,7 +36,7 @@ def _make_project(name: str = "Sync Test Project") -> int:
 
 def _make_calendar_id() -> int:
     """Return the default calendar id."""
-    import grouper.database.calendars as _calendars
+    import desktop.database.calendars as _calendars
 
     return _calendars.get_default_calendar_id()
 
@@ -47,8 +47,8 @@ def _linked_pair(
     event_end: datetime,
 ) -> tuple[int, int]:
     """Create a task and a linked event; return (task_id, event_id)."""
-    import grouper.database.events as _events
-    import grouper.database.tasks as _tasks
+    import desktop.database.events as _events
+    import desktop.database.tasks as _tasks
 
     project_id = _make_project()
     cal_id = _make_calendar_id()
@@ -78,8 +78,8 @@ class TestEventToTaskSync:
 
     def test_update_event_syncs_due_date(self) -> None:
         """Moving an event's start_dt should update the linked task's due_date."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         original_end = datetime(2026, 3, 15, 10, 0)
@@ -99,8 +99,8 @@ class TestEventToTaskSync:
 
     def test_update_event_preserves_time_component(self) -> None:
         """The synced due_date should carry the new start_dt's time, not the old one."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         original_end = datetime(2026, 3, 15, 10, 0)
@@ -126,8 +126,8 @@ class TestTaskToEventSync:
 
     def test_update_task_syncs_event_start(self) -> None:
         """Changing task due_date should update the linked event's start_dt."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         original_end = datetime(2026, 3, 15, 10, 0)
@@ -146,8 +146,8 @@ class TestTaskToEventSync:
 
     def test_update_task_preserves_event_duration(self) -> None:
         """After syncing, event.end_dt must preserve the original 1-hour duration."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         original_end = datetime(2026, 3, 15, 11, 0)  # 2-hour event
@@ -172,8 +172,8 @@ class TestTaskToEventSync:
         null those out. Instead, the event's linked_task_id is cleared,
         breaking the association while keeping the event structurally valid.
         """
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         original_end = datetime(2026, 3, 15, 10, 0)
@@ -218,7 +218,7 @@ class TestRecursionGuard:
 
     def test_update_event_no_recursion(self) -> None:
         """update_event on a linked event must complete without RecursionError."""
-        import grouper.database.events as _events
+        import desktop.database.events as _events
 
         original = datetime(2026, 3, 15, 9, 0)
         _task_id, event_id = _linked_pair(
@@ -235,7 +235,7 @@ class TestRecursionGuard:
 
     def test_update_task_no_recursion(self) -> None:
         """update_task on a linked task must complete without RecursionError."""
-        import grouper.database.tasks as _tasks
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         task_id, _event_id = _linked_pair(
@@ -260,8 +260,8 @@ class TestDeleteEventClearsTaskDueDate:
 
     def test_delete_event_clears_due_date(self) -> None:
         """After deleting the linked event, task.due_date should be None."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         task_id, event_id = _linked_pair(
@@ -285,8 +285,8 @@ class TestDeleteEventClearsTaskDueDate:
 
     def test_delete_event_task_otherwise_intact(self) -> None:
         """Deleting the event should not affect other task fields."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         project_id = _make_project("Intact Test Project")
@@ -330,7 +330,7 @@ class TestNoSyncWhenUnlinked:
 
     def test_standalone_event_update_no_crash(self) -> None:
         """Updating a non-linked event's start_dt must not raise."""
-        import grouper.database.events as _events
+        import desktop.database.events as _events
 
         cal_id = _make_calendar_id()
         event = _events.create_event(
@@ -355,7 +355,7 @@ class TestNoSyncWhenUnlinked:
 
     def test_standalone_task_update_no_crash(self) -> None:
         """Updating a task that has no linked event must not raise."""
-        import grouper.database.tasks as _tasks
+        import desktop.database.tasks as _tasks
 
         project_id = _make_project("Standalone Task Project")
         task = _tasks.create_task(
@@ -390,8 +390,8 @@ class TestGhostProblemRegression:
 
     def test_move_event_ghost_eliminated(self) -> None:
         """After moving the event, the task must NOT still show on the old date."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         march_15 = datetime(2026, 3, 15, 9, 0)
         march_15_end = datetime(2026, 3, 15, 10, 0)
@@ -421,8 +421,8 @@ class TestGhostProblemRegression:
     @pytest.mark.parametrize("days_offset", [1, 3, 7, 14])
     def test_move_event_various_offsets(self, days_offset: int) -> None:
         """Parameterized: moving event by N days should shift due_date by N days."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         base = datetime(2026, 3, 10, 9, 0)
         base_end = datetime(2026, 3, 10, 10, 0)
@@ -451,8 +451,8 @@ class TestSyncFlagIsolation:
 
     def test_update_task_from_event_sync_no_reverse(self) -> None:
         """update_task(..., _from_event_sync=True) must NOT sync back to the event."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         original_end = datetime(2026, 3, 15, 10, 0)
@@ -480,8 +480,8 @@ class TestSyncFlagIsolation:
 
     def test_update_event_from_task_sync_no_reverse(self) -> None:
         """update_event(..., _from_task_sync=True) must NOT sync back to the task."""
-        import grouper.database.events as _events
-        import grouper.database.tasks as _tasks
+        import desktop.database.events as _events
+        import desktop.database.tasks as _tasks
 
         original = datetime(2026, 3, 15, 9, 0)
         original_end = datetime(2026, 3, 15, 10, 0)
@@ -510,7 +510,7 @@ class TestSyncFlagIsolation:
 
     def test_sync_flag_does_not_suppress_db_write(self) -> None:
         """The _from_*_sync flag suppresses reverse sync only, not the write itself."""
-        import grouper.database.tasks as _tasks
+        import desktop.database.tasks as _tasks
 
         project_id = _make_project("Flag DB Write Project")
         task = _tasks.create_task(project_id, "Flag Test Task")

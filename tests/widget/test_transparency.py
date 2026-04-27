@@ -6,10 +6,10 @@ import math
 import re
 
 import pytest
-from grouper.models import Activity
-from grouper.styles import _THEME_PALETTE, available_themes, load_theme
-from grouper.ui.activity_config import _ActivityDetailEditor
-from grouper.ui.dialogs import AddGroupDialog, FramelessDialog
+from desktop.models import Activity
+from desktop.styles import _THEME_PALETTE, available_themes, load_theme
+from desktop.ui.tasks.dialogs import AddGroupDialog, FramelessDialog
+from desktop.ui.time.activity_config import _ActivityDetailEditor
 from PySide6.QtCore import QPoint, QRect
 from PySide6.QtGui import QColor, QImage
 from PySide6.QtTest import QTest

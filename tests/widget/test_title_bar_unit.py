@@ -26,8 +26,8 @@ def main_window():
     """Create a MainWindow without showing it."""
     # Isolate config so it doesn't touch the real DB
     with (
-        patch("grouper.app.get_config") as mock_cfg,
-        patch("grouper.app.theme_colors", return_value={"border": "#7aa2f7"}),
+        patch("desktop.app.get_config") as mock_cfg,
+        patch("desktop.app.theme_colors", return_value={"border": "#7aa2f7"}),
     ):
         cfg = MagicMock()
         cfg.theme = "dark"
@@ -35,7 +35,7 @@ def main_window():
         cfg.window_height = 600
         mock_cfg.return_value = cfg
 
-        from grouper.app import MainWindow
+        from desktop.app import MainWindow
 
         win = MainWindow()
         yield win
@@ -46,7 +46,7 @@ def main_window():
 @pytest.fixture
 def title_bar():
     """Create a standalone TitleBar widget."""
-    from grouper.ui.title_bar import TitleBar
+    from desktop.ui.shared.title_bar import TitleBar
 
     tb = TitleBar()
     yield tb
@@ -56,7 +56,7 @@ def title_bar():
 @pytest.fixture
 def dialog_title_bar():
     """Create a standalone DialogTitleBar widget."""
-    from grouper.ui.title_bar import DialogTitleBar
+    from desktop.ui.shared.title_bar import DialogTitleBar
 
     dtb = DialogTitleBar("Test Dialog")
     yield dtb
@@ -88,7 +88,7 @@ class TestWmNccalcsize:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_returns_zero_when_wparam_set(self, main_window):
         """When wParam=1, should return (True, 0) regardless of maximized state."""
-        from grouper.app import WM_NCCALCSIZE
+        from desktop.app import WM_NCCALCSIZE
 
         msg = _make_msg(WM_NCCALCSIZE, wparam=1, lparam=0)
         msg_addr = ctypes.addressof(msg)
@@ -101,7 +101,7 @@ class TestWmNccalcsize:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_defers_when_wparam_zero(self, main_window):
         """When wParam=0, should defer to super().nativeEvent()."""
-        from grouper.app import WM_NCCALCSIZE
+        from desktop.app import WM_NCCALCSIZE
 
         msg = _make_msg(WM_NCCALCSIZE, wparam=0, lparam=0)
         msg_addr = ctypes.addressof(msg)
@@ -124,7 +124,7 @@ class TestWmGetminmaxinfo:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_constrains_to_work_area(self, main_window, qapp: QApplication):
         """Should set ptMaxSize and ptMaxPosition from the monitor work area."""
-        from grouper.app import MINMAXINFO, WM_GETMINMAXINFO
+        from desktop.app import MINMAXINFO, WM_GETMINMAXINFO
 
         # Create a MINMAXINFO struct in memory
         mmi = MINMAXINFO()
@@ -155,7 +155,7 @@ class TestWmNchittest:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_edge_returns_resize_codes(self, main_window):
         """Cursor at the top-left corner should return HTTOPLEFT."""
-        from grouper.app import HTTOPLEFT, WM_NCHITTEST
+        from desktop.app import HTTOPLEFT, WM_NCHITTEST
 
         main_window.setGeometry(100, 100, 800, 600)
 
@@ -168,7 +168,7 @@ class TestWmNchittest:
             patch.object(
                 type(main_window), "frameGeometry", return_value=QRect(100, 100, 800, 600)
             ),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
         ):
             mock_cursor.pos.return_value = QPoint(101, 101)
             result = main_window.nativeEvent(b"windows_generic_MSG", msg_addr)
@@ -178,7 +178,7 @@ class TestWmNchittest:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_skips_resize_when_maximized(self, main_window, qapp: QApplication):
         """Edge positions should not return resize codes when maximized."""
-        from grouper.app import HTTOPLEFT, WM_NCHITTEST
+        from desktop.app import HTTOPLEFT, WM_NCHITTEST
 
         main_window.setGeometry(100, 100, 800, 600)
         main_window.show()
@@ -192,7 +192,7 @@ class TestWmNchittest:
             patch.object(
                 type(main_window), "frameGeometry", return_value=QRect(100, 100, 800, 600)
             ),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
         ):
             mock_cursor.pos.return_value = QPoint(101, 101)
             result = main_window.nativeEvent(b"windows_generic_MSG", msg_addr)
@@ -204,7 +204,7 @@ class TestWmNchittest:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_title_bar_returns_htcaption(self, main_window, qapp: QApplication):
         """Cursor over the title bar (not on a button) should return HTCAPTION."""
-        from grouper.app import HTCAPTION, WM_NCHITTEST
+        from desktop.app import HTCAPTION, WM_NCHITTEST
 
         main_window.setGeometry(100, 100, 800, 600)
         main_window.show()
@@ -218,7 +218,7 @@ class TestWmNchittest:
 
         with (
             patch.object(type(main_window), "isMaximized", return_value=False),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
         ):
             mock_cursor.pos.return_value = tb_center
             result = main_window.nativeEvent(b"windows_generic_MSG", msg_addr)
@@ -230,7 +230,7 @@ class TestWmNchittest:
         """Cursor over the maximize button returns HTMAXBUTTON on Win11+
         (enables Snap Layouts flyout) or HTCLIENT on Win10 (Qt handles click).
         """
-        from grouper.app import (
+        from desktop.app import (
             _WIN11_OR_LATER,
             HTCLIENT,
             HTMAXBUTTON,
@@ -249,7 +249,7 @@ class TestWmNchittest:
 
         with (
             patch.object(type(main_window), "isMaximized", return_value=False),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
         ):
             mock_cursor.pos.return_value = btn_center
             result = main_window.nativeEvent(b"windows_generic_MSG", msg_addr)
@@ -258,10 +258,10 @@ class TestWmNchittest:
         assert result == (True, expected), f"Expected {expected}, got {result}"
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
-    @patch("grouper.app._WIN11_OR_LATER", True)
+    @patch("desktop.app._WIN11_OR_LATER", True)
     def test_max_button_returns_htmaxbutton_on_win11(self, main_window, qapp: QApplication):
         """On Win11+, maximize button returns HTMAXBUTTON for Snap Layouts."""
-        from grouper.app import HTMAXBUTTON, WM_NCHITTEST
+        from desktop.app import HTMAXBUTTON, WM_NCHITTEST
 
         main_window.setGeometry(100, 100, 800, 600)
         main_window.show()
@@ -275,7 +275,7 @@ class TestWmNchittest:
 
         with (
             patch.object(type(main_window), "isMaximized", return_value=False),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
         ):
             mock_cursor.pos.return_value = btn_center
             result = main_window.nativeEvent(b"windows_generic_MSG", msg_addr)
@@ -283,10 +283,10 @@ class TestWmNchittest:
         assert result == (True, HTMAXBUTTON)
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
-    @patch("grouper.app._WIN11_OR_LATER", False)
+    @patch("desktop.app._WIN11_OR_LATER", False)
     def test_max_button_returns_htclient_on_win10(self, main_window, qapp: QApplication):
         """On Win10, maximize button returns HTCLIENT so Qt handles the click."""
-        from grouper.app import HTCLIENT, WM_NCHITTEST
+        from desktop.app import HTCLIENT, WM_NCHITTEST
 
         main_window.setGeometry(100, 100, 800, 600)
         main_window.show()
@@ -300,7 +300,7 @@ class TestWmNchittest:
 
         with (
             patch.object(type(main_window), "isMaximized", return_value=False),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
         ):
             mock_cursor.pos.return_value = btn_center
             result = main_window.nativeEvent(b"windows_generic_MSG", msg_addr)
@@ -310,7 +310,7 @@ class TestWmNchittest:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_close_button_returns_htclient(self, main_window, qapp: QApplication):
         """Cursor over the close button should return HTCLIENT (Qt handles click)."""
-        from grouper.app import HTCLIENT, WM_NCHITTEST
+        from desktop.app import HTCLIENT, WM_NCHITTEST
 
         main_window.setGeometry(100, 100, 800, 600)
         main_window.show()
@@ -324,7 +324,7 @@ class TestWmNchittest:
 
         with (
             patch.object(type(main_window), "isMaximized", return_value=False),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
         ):
             mock_cursor.pos.return_value = btn_center
             result = main_window.nativeEvent(b"windows_generic_MSG", msg_addr)
@@ -334,7 +334,7 @@ class TestWmNchittest:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_min_button_returns_htclient(self, main_window, qapp: QApplication):
         """Cursor over the minimize button should return HTCLIENT."""
-        from grouper.app import HTCLIENT, WM_NCHITTEST
+        from desktop.app import HTCLIENT, WM_NCHITTEST
 
         main_window.setGeometry(100, 100, 800, 600)
         main_window.show()
@@ -348,7 +348,7 @@ class TestWmNchittest:
 
         with (
             patch.object(type(main_window), "isMaximized", return_value=False),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
         ):
             mock_cursor.pos.return_value = btn_center
             result = main_window.nativeEvent(b"windows_generic_MSG", msg_addr)
@@ -367,7 +367,7 @@ class TestNcMouseHover:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_ncmousemove_sets_hover_property(self, main_window):
         """WM_NCMOUSEMOVE with wParam=HTMAXBUTTON should set ncHover=True."""
-        from grouper.app import HTMAXBUTTON, WM_NCMOUSEMOVE
+        from desktop.app import HTMAXBUTTON, WM_NCMOUSEMOVE
 
         msg = _make_msg(WM_NCMOUSEMOVE, wparam=HTMAXBUTTON)
         msg_addr = ctypes.addressof(msg)
@@ -380,7 +380,7 @@ class TestNcMouseHover:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_ncmousemove_clears_hover_for_other_regions(self, main_window):
         """WM_NCMOUSEMOVE with wParam != HTMAXBUTTON should set ncHover=False."""
-        from grouper.app import HTCAPTION, WM_NCMOUSEMOVE
+        from desktop.app import HTCAPTION, WM_NCMOUSEMOVE
 
         # First set hover on
         main_window._title_bar._btn_max.setProperty("ncHover", True)
@@ -396,7 +396,7 @@ class TestNcMouseHover:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_ncmouseleave_clears_hover(self, main_window):
         """WM_NCMOUSELEAVE should clear the ncHover property."""
-        from grouper.app import WM_NCMOUSELEAVE
+        from desktop.app import WM_NCMOUSELEAVE
 
         # Set hover on first
         main_window._title_bar._btn_max.setProperty("ncHover", True)
@@ -549,7 +549,7 @@ class TestWindowFlags:
 
     def test_no_frameless_hint(self):
         """_WINDOW_FLAGS must NOT include FramelessWindowHint (breaks snap zones)."""
-        from grouper.app import MainWindow
+        from desktop.app import MainWindow
 
         flags = MainWindow._WINDOW_FLAGS
         assert not (flags & Qt.WindowType.FramelessWindowHint), (
@@ -558,7 +558,7 @@ class TestWindowFlags:
 
     def test_includes_required_hints(self):
         """_WINDOW_FLAGS should include Window and WindowMinMaxButtonsHint."""
-        from grouper.app import MainWindow
+        from desktop.app import MainWindow
 
         flags = MainWindow._WINDOW_FLAGS
         assert flags & Qt.WindowType.WindowMinMaxButtonsHint
@@ -576,7 +576,7 @@ class TestWmNclbuttondown:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_restores_when_maximized(self, main_window):
         """Should call showNormal, move, ReleaseCapture, and SendMessageW."""
-        from grouper.app import HTCAPTION, WM_NCLBUTTONDOWN
+        from desktop.app import HTCAPTION, WM_NCLBUTTONDOWN
 
         x, y = 500, 15
         msg = _make_msg(WM_NCLBUTTONDOWN, wparam=HTCAPTION)
@@ -592,8 +592,8 @@ class TestWmNclbuttondown:
             patch.object(tb, "mapToGlobal", return_value=QPoint(0, 0)),
             patch.object(main_window, "showNormal") as mock_show,
             patch.object(main_window, "move") as mock_move,
-            patch("grouper.app.QApplication.processEvents"),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QApplication.processEvents"),
+            patch("desktop.app.QCursor") as mock_cursor,
             patch("ctypes.windll.user32.ReleaseCapture") as mock_rc,
             patch("ctypes.windll.user32.SendMessageW") as mock_send,
         ):
@@ -612,7 +612,7 @@ class TestWmNclbuttondown:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_passthrough_when_not_maximized(self, main_window):
         """Should not intercept when the window is not maximized."""
-        from grouper.app import HTCAPTION, WM_NCLBUTTONDOWN
+        from desktop.app import HTCAPTION, WM_NCLBUTTONDOWN
 
         msg = _make_msg(WM_NCLBUTTONDOWN, wparam=HTCAPTION)
         msg_addr = ctypes.addressof(msg)
@@ -629,7 +629,7 @@ class TestWmNclbuttondown:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_passthrough_for_non_caption(self, main_window):
         """Should not intercept WM_NCLBUTTONDOWN for non-caption hits."""
-        from grouper.app import HTCLIENT, WM_NCLBUTTONDOWN
+        from desktop.app import HTCLIENT, WM_NCLBUTTONDOWN
 
         msg = _make_msg(WM_NCLBUTTONDOWN, wparam=HTCLIENT)
         msg_addr = ctypes.addressof(msg)
@@ -646,7 +646,7 @@ class TestWmNclbuttondown:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_proportional_position(self, main_window):
         """Restored window should position the cursor at the same spot on the title bar."""
-        from grouper.app import HTCAPTION, WM_NCLBUTTONDOWN
+        from desktop.app import HTCAPTION, WM_NCLBUTTONDOWN
 
         x, y = 480, 15
         msg = _make_msg(WM_NCLBUTTONDOWN, wparam=HTCAPTION)
@@ -662,8 +662,8 @@ class TestWmNclbuttondown:
             patch.object(tb, "mapToGlobal", return_value=QPoint(0, 0)),
             patch.object(main_window, "showNormal"),
             patch.object(main_window, "move") as mock_move,
-            patch("grouper.app.QApplication.processEvents"),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QApplication.processEvents"),
+            patch("desktop.app.QCursor") as mock_cursor,
             patch("ctypes.windll.user32.ReleaseCapture"),
             patch("ctypes.windll.user32.SendMessageW"),
         ):
@@ -680,7 +680,7 @@ class TestWmNclbuttondown:
     def test_htmaxbutton_swallowed(self, main_window):
         """WM_NCLBUTTONDOWN with HTMAXBUTTON should be swallowed to prevent
         DefWindowProc's broken modal tracking loop on zero-size NC area."""
-        from grouper.app import HTMAXBUTTON, WM_NCLBUTTONDOWN
+        from desktop.app import HTMAXBUTTON, WM_NCLBUTTONDOWN
 
         msg = _make_msg(WM_NCLBUTTONDOWN, wparam=HTMAXBUTTON)
         msg_addr = ctypes.addressof(msg)
@@ -708,7 +708,7 @@ class TestWmNclbuttonup:
     def test_maximizes_when_normal(self, main_window, qapp: QApplication):
         """Should call showMaximized when not maximized and cursor is
         over the maximize button."""
-        from grouper.app import HTMAXBUTTON, WM_NCLBUTTONUP
+        from desktop.app import HTMAXBUTTON, WM_NCLBUTTONUP
 
         main_window.show()
         qapp.processEvents()
@@ -723,7 +723,7 @@ class TestWmNclbuttonup:
 
         with (
             patch.object(type(main_window), "isMaximized", return_value=False),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
             patch.object(main_window, "showMaximized") as mock_max,
         ):
             mock_cursor.pos.return_value = btn_center
@@ -736,7 +736,7 @@ class TestWmNclbuttonup:
     def test_restores_when_maximized(self, main_window, qapp: QApplication):
         """Should call showNormal when maximized and cursor is over
         the maximize button."""
-        from grouper.app import HTMAXBUTTON, WM_NCLBUTTONUP
+        from desktop.app import HTMAXBUTTON, WM_NCLBUTTONUP
 
         main_window.show()
         qapp.processEvents()
@@ -751,7 +751,7 @@ class TestWmNclbuttonup:
 
         with (
             patch.object(type(main_window), "isMaximized", return_value=True),
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
             patch.object(main_window, "showNormal") as mock_normal,
         ):
             mock_cursor.pos.return_value = btn_center
@@ -764,7 +764,7 @@ class TestWmNclbuttonup:
     def test_no_toggle_when_cursor_outside_button(self, main_window, qapp: QApplication):
         """If cursor moves off the button before release, no toggle
         should happen (standard press-then-drag-off cancel)."""
-        from grouper.app import HTMAXBUTTON, WM_NCLBUTTONUP
+        from desktop.app import HTMAXBUTTON, WM_NCLBUTTONUP
 
         main_window.show()
         qapp.processEvents()
@@ -773,7 +773,7 @@ class TestWmNclbuttonup:
         msg_addr = ctypes.addressof(msg)
 
         with (
-            patch("grouper.app.QCursor") as mock_cursor,
+            patch("desktop.app.QCursor") as mock_cursor,
             patch.object(main_window, "showMaximized") as mock_max,
             patch.object(main_window, "showNormal") as mock_normal,
         ):
@@ -787,7 +787,7 @@ class TestWmNclbuttonup:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_non_htmaxbutton_passes_through(self, main_window):
         """WM_NCLBUTTONUP for non-HTMAXBUTTON should fall through."""
-        from grouper.app import HTCAPTION, WM_NCLBUTTONUP
+        from desktop.app import HTCAPTION, WM_NCLBUTTONUP
 
         msg = _make_msg(WM_NCLBUTTONUP, wparam=HTCAPTION)
         msg_addr = ctypes.addressof(msg)
@@ -809,7 +809,7 @@ class TestWmNclbuttondblclk:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_htmaxbutton_swallowed(self, main_window):
         """WM_NCLBUTTONDBLCLK(HTMAXBUTTON) should be swallowed."""
-        from grouper.app import HTMAXBUTTON, WM_NCLBUTTONDBLCLK
+        from desktop.app import HTMAXBUTTON, WM_NCLBUTTONDBLCLK
 
         msg = _make_msg(WM_NCLBUTTONDBLCLK, wparam=HTMAXBUTTON)
         msg_addr = ctypes.addressof(msg)
@@ -821,7 +821,7 @@ class TestWmNclbuttondblclk:
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
     def test_non_htmaxbutton_passes_through(self, main_window):
         """WM_NCLBUTTONDBLCLK for non-HTMAXBUTTON should fall through."""
-        from grouper.app import HTCAPTION, WM_NCLBUTTONDBLCLK
+        from desktop.app import HTCAPTION, WM_NCLBUTTONDBLCLK
 
         msg = _make_msg(WM_NCLBUTTONDBLCLK, wparam=HTCAPTION)
         msg_addr = ctypes.addressof(msg)

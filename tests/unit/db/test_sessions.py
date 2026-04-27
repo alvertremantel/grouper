@@ -29,7 +29,7 @@ def _insert_session(
     paused_seconds: int = 0,
 ) -> int:
     """Insert a completed session directly into the DB, return the row id."""
-    from grouper.database.connection import get_connection
+    from desktop.database.connection import get_connection
 
     with get_connection() as conn:
         cur = conn.execute(
@@ -44,7 +44,7 @@ def _insert_session(
 
 def _get_all_sessions() -> list[dict]:
     """Return every session row as a dict."""
-    from grouper.database.connection import get_connection
+    from desktop.database.connection import get_connection
 
     with get_connection() as conn:
         rows = conn.execute(
@@ -55,7 +55,7 @@ def _get_all_sessions() -> list[dict]:
 
 def _ensure_activity(name: str) -> None:
     """Create an activity if it doesn't already exist."""
-    from grouper.database.activities import get_or_create_activity
+    from desktop.database.activities import get_or_create_activity
 
     get_or_create_activity(name)
 
@@ -70,7 +70,7 @@ class TestSplitSessionsAtMidnight:
         _ensure_activity("Coding")
         _insert_session("Coding", "2026-03-15T10:00:00", "2026-03-15T18:00:00")
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         created = split_sessions_at_midnight()
         assert created == 0
@@ -82,7 +82,7 @@ class TestSplitSessionsAtMidnight:
         _ensure_activity("Coding")
         _insert_session("Coding", "2026-03-15T23:00:00", "2026-03-16T01:00:00")
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         created = split_sessions_at_midnight()
         assert created == 1  # one new segment inserted
@@ -105,7 +105,7 @@ class TestSplitSessionsAtMidnight:
         # Monday 23:00 -> Wednesday 01:00 spans two midnights
         _insert_session("Coding", "2026-03-16T23:00:00", "2026-03-18T01:00:00")
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         created = split_sessions_at_midnight()
         assert created == 2  # two new segments
@@ -129,7 +129,7 @@ class TestSplitSessionsAtMidnight:
         _ensure_activity("Reading")
         _insert_session("Reading", "2026-03-20T22:00:00", "2026-03-21T06:00:00")
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         split_sessions_at_midnight()
 
@@ -148,7 +148,7 @@ class TestSplitSessionsAtMidnight:
             notes="important note",
         )
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         split_sessions_at_midnight()
 
@@ -162,9 +162,9 @@ class TestSplitSessionsAtMidnight:
         _ensure_activity("Coding")
 
         # Create a real task so FK constraint is satisfied
-        import grouper.database.boards as _boards
-        import grouper.database.projects as _projects
-        import grouper.database.tasks as _tasks
+        import desktop.database.boards as _boards
+        import desktop.database.projects as _projects
+        import desktop.database.tasks as _tasks
 
         board = _boards.get_or_create_default_board()
         proj = _projects.create_project("TestProj", board_id=board.id)
@@ -178,7 +178,7 @@ class TestSplitSessionsAtMidnight:
             task_id=task_id,
         )
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         split_sessions_at_midnight()
 
@@ -191,7 +191,7 @@ class TestSplitSessionsAtMidnight:
         _ensure_activity("Coding")
         original_id = _insert_session("Coding", "2026-03-15T23:00:00", "2026-03-16T01:00:00")
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         split_sessions_at_midnight()
 
@@ -205,7 +205,7 @@ class TestSplitSessionsAtMidnight:
         _ensure_activity("Reading")
         _insert_session("Reading", "2026-03-15T23:30:00", "2026-03-16T00:30:00")
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         split_sessions_at_midnight()
 
@@ -217,7 +217,7 @@ class TestSplitSessionsAtMidnight:
         _ensure_activity("Coding")
         _insert_session("Coding", "2026-03-15T23:00:00", "2026-03-16T01:00:00")
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         first = split_sessions_at_midnight()
         assert first == 1
@@ -238,7 +238,7 @@ class TestSplitSessionsAtMidnight:
             paused_seconds=300,
         )
 
-        from grouper.database.sessions import split_sessions_at_midnight
+        from desktop.database.sessions import split_sessions_at_midnight
 
         split_sessions_at_midnight()
 
@@ -263,7 +263,7 @@ class TestExportSessionsCsv:
 
         filepath = str(tmp_path / "sessions.csv")
 
-        from grouper.database.sessions import export_sessions_csv
+        from desktop.database.sessions import export_sessions_csv
 
         export_sessions_csv(filepath)
 
@@ -278,7 +278,7 @@ class TestExportSessionsCsv:
     def test_export_empty_database(self, tmp_path: Path) -> None:
         filepath = str(tmp_path / "empty.csv")
 
-        from grouper.database.sessions import export_sessions_csv
+        from desktop.database.sessions import export_sessions_csv
 
         export_sessions_csv(filepath)
 
@@ -302,7 +302,7 @@ class TestExportSessionsCsv:
 
         filepath = str(tmp_path / "five.csv")
 
-        from grouper.database.sessions import export_sessions_csv
+        from desktop.database.sessions import export_sessions_csv
 
         export_sessions_csv(filepath)
 
@@ -315,7 +315,7 @@ class TestExportSessionsCsv:
     def test_csv_headers_match_expected(self, tmp_path: Path) -> None:
         filepath = str(tmp_path / "headers.csv")
 
-        from grouper.database.sessions import export_sessions_csv
+        from desktop.database.sessions import export_sessions_csv
 
         export_sessions_csv(filepath)
 
@@ -336,7 +336,7 @@ class TestExportSessionsCsv:
 
         filepath = str(tmp_path / "notes.csv")
 
-        from grouper.database.sessions import export_sessions_csv
+        from desktop.database.sessions import export_sessions_csv
 
         export_sessions_csv(filepath)
 
@@ -354,7 +354,7 @@ class TestExportSessionsCsv:
 
         filepath = str(tmp_path / "activity.csv")
 
-        from grouper.database.sessions import export_sessions_csv
+        from desktop.database.sessions import export_sessions_csv
 
         export_sessions_csv(filepath)
 
@@ -378,7 +378,7 @@ class TestGetSummarySupplementary:
         _insert_session("Coding", "2026-03-15T10:00:00", "2026-03-15T11:00:00")  # 3600
         _insert_session("Reading", "2026-03-15T12:00:00", "2026-03-15T12:30:00")  # 1800
 
-        from grouper.database.sessions import get_summary
+        from desktop.database.sessions import get_summary
 
         result = get_summary()
         assert result["Coding"] == 3600
@@ -390,7 +390,7 @@ class TestGetSummarySupplementary:
         _insert_session("Coding", "2026-03-15T10:00:00", "2026-03-15T11:00:00")  # in range
         _insert_session("Coding", "2026-03-16T10:00:00", "2026-03-16T11:00:00")  # after
 
-        from grouper.database.sessions import get_summary
+        from desktop.database.sessions import get_summary
 
         result = get_summary(
             start_date=datetime(2026, 3, 15),
@@ -399,7 +399,7 @@ class TestGetSummarySupplementary:
         assert result == {"Coding": 3600}
 
     def test_empty_database_returns_empty_dict(self) -> None:
-        from grouper.database.sessions import get_summary
+        from desktop.database.sessions import get_summary
 
         assert get_summary() == {}
 
@@ -408,7 +408,7 @@ class TestGetSummarySupplementary:
         _insert_session("Coding", "2026-03-14T10:00:00", "2026-03-14T11:00:00")
         _insert_session("Coding", "2026-03-15T10:00:00", "2026-03-15T11:00:00")
 
-        from grouper.database.sessions import get_summary
+        from desktop.database.sessions import get_summary
 
         result = get_summary(start_date=datetime(2026, 3, 15))
         assert result == {"Coding": 3600}
@@ -425,7 +425,7 @@ class TestGetSummaryByDaySupplementary:
         _insert_session("Coding", "2026-03-15T10:00:00", "2026-03-15T11:00:00")
         _insert_session("Coding", "2026-03-16T09:00:00", "2026-03-16T09:30:00")
 
-        from grouper.database.sessions import get_summary_by_day
+        from desktop.database.sessions import get_summary_by_day
 
         result = get_summary_by_day(datetime(2026, 3, 15), datetime(2026, 3, 17))
         assert result == {
@@ -436,7 +436,7 @@ class TestGetSummaryByDaySupplementary:
         }
 
     def test_empty_range_returns_empty(self) -> None:
-        from grouper.database.sessions import get_summary_by_day
+        from desktop.database.sessions import get_summary_by_day
 
         result = get_summary_by_day(datetime(2026, 3, 15), datetime(2026, 3, 16))
         assert result == {}
@@ -447,7 +447,7 @@ class TestGetSummaryByDaySupplementary:
         _insert_session("Coding", "2026-03-15T10:00:00", "2026-03-15T11:00:00")
         _insert_session("Reading", "2026-03-15T14:00:00", "2026-03-15T15:00:00")
 
-        from grouper.database.sessions import get_summary_by_day
+        from desktop.database.sessions import get_summary_by_day
 
         result = get_summary_by_day(datetime(2026, 3, 15), datetime(2026, 3, 16))
         assert "Coding" in result
@@ -461,7 +461,7 @@ class TestGetSummaryByDaySupplementary:
         _insert_session("Coding", "2026-03-15T10:00:00", "2026-03-15T11:00:00")
         _insert_session("Coding", "2026-03-17T10:00:00", "2026-03-17T11:00:00")
 
-        from grouper.database.sessions import get_summary_by_day
+        from desktop.database.sessions import get_summary_by_day
 
         result = get_summary_by_day(datetime(2026, 3, 15), datetime(2026, 3, 16))
         assert result == {"Coding": {"2026-03-15": 3600}}

@@ -1,9 +1,9 @@
-"""Tests for the centralised SVG icon cache (grouper.ui.icons)."""
+"""Tests for the centralised SVG icon cache (desktop.ui.shared.icons)."""
 
 from __future__ import annotations
 
 import pytest
-from grouper.ui.icons import _cache, clear_cache, get_icon
+from desktop.ui.shared.icons import _cache, clear_cache, get_icon
 from PySide6.QtGui import QIcon
 
 pytestmark = pytest.mark.usefixtures("qapp")

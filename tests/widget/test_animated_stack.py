@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QSizePolicy, QVBoxLayout, QW
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from grouper.ui.animated_stack import AnimatedViewStack, SlideAxis
+from desktop.ui.shared.animated_stack import AnimatedViewStack, SlideAxis
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ class TestAddWidget:
 class TestSwitchNoAnimation:
     """Test view switching with animations disabled (instant swap)."""
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_switch_forward_hides_old_shows_new(self, mock_cfg, stack_h: AnimatedViewStack) -> None:
         mock_cfg.return_value.animations_enabled = False
         stack_h.setCurrentIndex(2)  # Month -> Agenda
@@ -104,7 +104,7 @@ class TestSwitchNoAnimation:
         assert stack_h.widget(0).isHidden()
         assert not stack_h.widget(2).isHidden()
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_switch_backward(self, mock_cfg, stack_h: AnimatedViewStack) -> None:
         mock_cfg.return_value.animations_enabled = False
         stack_h.setCurrentIndex(3)
@@ -113,13 +113,13 @@ class TestSwitchNoAnimation:
         assert not stack_h.widget(1).isHidden()
         assert stack_h.widget(3).isHidden()
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_switch_to_same_index_is_noop(self, mock_cfg, stack_h: AnimatedViewStack) -> None:
         mock_cfg.return_value.animations_enabled = False
         stack_h.setCurrentIndex(0)
         assert stack_h.currentIndex() == 0
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_switch_out_of_range_is_noop(self, mock_cfg, stack_h: AnimatedViewStack) -> None:
         mock_cfg.return_value.animations_enabled = False
         stack_h.setCurrentIndex(99)
@@ -127,7 +127,7 @@ class TestSwitchNoAnimation:
         stack_h.setCurrentIndex(-1)
         assert stack_h.currentIndex() == 0
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_current_changed_signal(self, mock_cfg, stack_h: AnimatedViewStack) -> None:
         mock_cfg.return_value.animations_enabled = False
         received: list[int] = []
@@ -142,7 +142,7 @@ class TestSwitchNoAnimation:
 class TestSwitchWithAnimation:
     """Test that animation starts with correct direction and offsets."""
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_horizontal_forward_starts_animation(
         self, mock_cfg, stack_h: AnimatedViewStack
     ) -> None:
@@ -153,7 +153,7 @@ class TestSwitchWithAnimation:
         assert stack_h._transitioning_from == 0
         assert stack_h._transitioning_to == 1
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_horizontal_backward_starts_animation(
         self, mock_cfg, stack_h: AnimatedViewStack
     ) -> None:
@@ -167,7 +167,7 @@ class TestSwitchWithAnimation:
         assert stack_h._transitioning_from == 3
         assert stack_h._transitioning_to == 1
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_vertical_forward_uses_vertical_offset(
         self, mock_cfg, stack_v: AnimatedViewStack
     ) -> None:
@@ -175,7 +175,7 @@ class TestSwitchWithAnimation:
         stack_v.setCurrentIndex(1)
         assert stack_v._animation_group is not None
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_rapid_switch_finalizes_previous(self, mock_cfg, stack_h: AnimatedViewStack) -> None:
         """Rapid clicking should cancel in-flight animation cleanly."""
         mock_cfg.return_value.animations_enabled = True
@@ -193,7 +193,7 @@ class TestSwitchWithAnimation:
 
 
 class TestFinalizeAndResize:
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_finalize_snaps_to_target(self, mock_cfg, stack_h: AnimatedViewStack) -> None:
         mock_cfg.return_value.animations_enabled = True
         stack_h.setCurrentIndex(2)
@@ -203,7 +203,7 @@ class TestFinalizeAndResize:
         assert stack_h.widget(0).isHidden()
         assert stack_h.widget(2).pos() == QPoint(0, 0)
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_resize_during_animation_finalizes(
         self, mock_cfg, stack_h: AnimatedViewStack, qapp: QApplication
     ) -> None:
@@ -227,7 +227,7 @@ class TestLayoutIntegration:
     """Verify AnimatedViewStack gets proper size when placed in a layout
     (the root cause of the calendar animation not being visible)."""
 
-    @patch("grouper.ui.animated_stack.get_config")
+    @patch("desktop.ui.shared.animated_stack.get_config")
     def test_stack_in_layout_gets_nonzero_size(self, mock_cfg, qapp: QApplication) -> None:
         mock_cfg.return_value.animations_enabled = True
         container = QWidget()

@@ -1,6 +1,6 @@
 """Tests for agenda view layout: content fills full height, anchored to top."""
 
-from grouper.ui.agenda_view import AgendaView
+from desktop.ui.calendar.agenda_view import AgendaView
 
 TALL_WIDTH = 900
 TALL_HEIGHT = 1800

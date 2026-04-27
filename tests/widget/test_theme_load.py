@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from grouper.styles import _get_template, available_themes, load_theme
+from desktop.styles import _get_template, available_themes, load_theme
 
 pytestmark = pytest.mark.widget
 
