@@ -1,7 +1,7 @@
 """Tests for dashboard layout: schedule anchoring, divider placement, height caps."""
 
-from grouper.ui.dashboard import DashboardView
-from grouper.ui.time_grid import FADE_HEIGHT, HOUR_HEIGHT
+from desktop.ui.time.time_grid import FADE_HEIGHT, HOUR_HEIGHT
+from desktop.ui.views.dashboard import DashboardView
 
 # Tall vertical screen simulation
 VERTICAL_WIDTH = 900

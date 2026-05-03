@@ -1,10 +1,10 @@
-"""Tests for grouper_install/path_env.py."""
+"""Tests for installer/path_env.py."""
 
 from __future__ import annotations
 
 from unittest.mock import patch
 
-from grouper_install.path_env import (
+from installer.path_env import (
     add_to_machine_path,
     normalize_path_entry,
     remove_from_machine_path,
@@ -36,8 +36,8 @@ class TestNormalizePathEntry:
 class TestAddToMachinePath:
     def test_appends_when_missing(self) -> None:
         with (
-            patch("grouper_install.path_env.get_machine_path", return_value="C:\\Existing"),
-            patch("grouper_install.path_env.set_machine_path") as mock_set,
+            patch("installer.path_env.get_machine_path", return_value="C:\\Existing"),
+            patch("installer.path_env.set_machine_path") as mock_set,
         ):
             result = add_to_machine_path("C:\\New")
             assert result is True
@@ -45,8 +45,8 @@ class TestAddToMachinePath:
 
     def test_skips_when_present(self) -> None:
         with (
-            patch("grouper_install.path_env.get_machine_path", return_value="C:\\Existing;C:\\New"),
-            patch("grouper_install.path_env.set_machine_path") as mock_set,
+            patch("installer.path_env.get_machine_path", return_value="C:\\Existing;C:\\New"),
+            patch("installer.path_env.set_machine_path") as mock_set,
         ):
             result = add_to_machine_path("c:\\new")
             assert result is False
@@ -54,8 +54,8 @@ class TestAddToMachinePath:
 
     def test_handles_trailing_backslash_dedup(self) -> None:
         with (
-            patch("grouper_install.path_env.get_machine_path", return_value="C:\\Foo"),
-            patch("grouper_install.path_env.set_machine_path") as mock_set,
+            patch("installer.path_env.get_machine_path", return_value="C:\\Foo"),
+            patch("installer.path_env.set_machine_path") as mock_set,
         ):
             result = add_to_machine_path("C:\\Foo\\")
             assert result is False
@@ -65,8 +65,8 @@ class TestAddToMachinePath:
 class TestRemoveFromMachinePath:
     def test_removes_entry(self) -> None:
         with (
-            patch("grouper_install.path_env.get_machine_path", return_value="C:\\A;C:\\B;C:\\C"),
-            patch("grouper_install.path_env.set_machine_path") as mock_set,
+            patch("installer.path_env.get_machine_path", return_value="C:\\A;C:\\B;C:\\C"),
+            patch("installer.path_env.set_machine_path") as mock_set,
         ):
             result = remove_from_machine_path("C:\\B")
             assert result is True
@@ -74,8 +74,8 @@ class TestRemoveFromMachinePath:
 
     def test_noop_when_absent(self) -> None:
         with (
-            patch("grouper_install.path_env.get_machine_path", return_value="C:\\A;C:\\B"),
-            patch("grouper_install.path_env.set_machine_path") as mock_set,
+            patch("installer.path_env.get_machine_path", return_value="C:\\A;C:\\B"),
+            patch("installer.path_env.set_machine_path") as mock_set,
         ):
             result = remove_from_machine_path("C:\\Z")
             assert result is False

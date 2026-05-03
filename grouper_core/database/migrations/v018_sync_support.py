@@ -6,7 +6,7 @@ identity), plus the bookkeeping tables that the sync system needs:
   - sync_changelog: append-only log of every INSERT/UPDATE/DELETE
   - sync_peers:     high-water marks for each known peer device
 
-CDC triggers are created dynamically by grouper_server.sync.changelog so that
+CDC triggers are created dynamically by grouper_sync.changelog so that
 they always reflect the current schema (including columns added by
 future migrations).
 """
@@ -17,7 +17,7 @@ import uuid as _uuid
 VERSION = 18
 DESCRIPTION = "Add sync support: UUID columns, CDC changelog, sync state"
 
-# Tables that get a uuid column.  Must match grouper_server.sync.schema.SYNCED_TABLES
+# Tables that get a uuid column.  Must match grouper_sync.schema.SYNCED_TABLES
 # minus 'settings' (which uses TEXT PK 'key', not integer id).
 _UUID_TABLES = [
     "activities",

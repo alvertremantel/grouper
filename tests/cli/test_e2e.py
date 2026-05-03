@@ -8,8 +8,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import grouper.database.boards as _boards
-import grouper.database.projects as _projects
+import desktop.database.boards as _boards
+import desktop.database.projects as _projects
 import pytest
 
 # ---------------------------------------------------------------------------

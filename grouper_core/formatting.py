@@ -1,6 +1,6 @@
 """formatting.py — Shared formatting and serialisation utilities.
 
-Used by grouper_cli to avoid duplicating common serialisation logic
+Used by the CLI package to avoid duplicating common serialisation logic
 (duration formatting, session dicts, task filtering, JSON default handlers).
 """
 

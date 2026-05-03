@@ -6,7 +6,7 @@ import re
 from typing import ClassVar
 
 import pytest
-from grouper.styles import _THEME_PALETTE, _get_template
+from desktop.styles import _THEME_PALETTE, _get_template
 
 _HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 _TOKEN_RE = re.compile(r"\{\{([\w-]+)\}\}")
@@ -92,3 +92,16 @@ class TestQssTemplateTokenCoverage:
                 rendered = rendered.replace("{{" + token + "}}", value)
             assert "{{" not in rendered, name
             assert "}}" not in rendered, name
+
+    def test_no_card_qdialog_override(self) -> None:
+        template = _get_template()
+        assert "#card QDialog" not in template
+
+    def test_has_frameless_dialog_selector(self) -> None:
+        template = _get_template()
+        assert "QDialog#framelessDialog" in template
+
+    def test_has_dialog_frame_and_content_rules(self) -> None:
+        template = _get_template()
+        assert "#dialogFrame" in template
+        assert "#dialogContent" in template

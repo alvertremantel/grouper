@@ -1,8 +1,8 @@
 """Test that ElidedLabel and _TaskboxCard actually elide text when constrained."""
 
-from grouper.models import Project
-from grouper.ui.dashboard import _TaskboxCard
-from grouper.ui.widgets import ElidedLabel
+from desktop.models import Project
+from desktop.ui.shared.widgets import ElidedLabel
+from desktop.ui.views.dashboard import _TaskboxCard
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QWidget
 
 

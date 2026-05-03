@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from grouper.app import MainWindow, _BorderedCentral
-from grouper.ui.animated_stack import AnimatedViewStack
-from grouper.ui.sidebar import Sidebar
-from grouper.ui.title_bar import TitleBar
+from desktop.app import MainWindow, _BorderedCentral
+from desktop.ui.shared.animated_stack import AnimatedViewStack
+from desktop.ui.shared.title_bar import TitleBar
+from desktop.ui.views.sidebar import Sidebar
 
 pytestmark = pytest.mark.widget
 

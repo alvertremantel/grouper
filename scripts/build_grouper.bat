@@ -69,7 +69,7 @@ python -m nuitka ^
     --include-data-files=pyproject.toml=pyproject.toml ^
     --include-package=grouper_core ^
     --include-package=grouper_core.database.migrations ^
-    --include-package=grouper_server.sync ^
+    --include-package=grouper_sync ^
     %ICON_FLAG% ^
     %NUITKA_LTO_FLAG% ^
     %OPTIONAL_SYNC_FLAGS% ^

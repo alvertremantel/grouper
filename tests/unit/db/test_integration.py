@@ -19,8 +19,8 @@ from datetime import datetime, timedelta
 
 class TestFullSessionLifecycle:
     def test_start_pause_resume_stop(self):
-        from grouper.database.activities import get_or_create_activity
-        from grouper.database.sessions import (
+        from desktop.database.activities import get_or_create_activity
+        from desktop.database.sessions import (
             get_active_session_by_activity,
             get_active_sessions,
             get_sessions,
@@ -92,8 +92,8 @@ class TestFullSessionLifecycle:
         assert all(s.activity_name == "Integration Test" for s in history)
 
     def test_start_stop_without_pause(self):
-        from grouper.database.activities import get_or_create_activity
-        from grouper.database.sessions import (
+        from desktop.database.activities import get_or_create_activity
+        from desktop.database.sessions import (
             get_active_sessions,
             get_sessions,
             start_session,
@@ -128,8 +128,8 @@ class TestFullSessionLifecycle:
 
 class TestMultipleConcurrentSessions:
     def test_two_concurrent_sessions(self):
-        from grouper.database.activities import get_or_create_activity
-        from grouper.database.sessions import (
+        from desktop.database.activities import get_or_create_activity
+        from desktop.database.sessions import (
             get_active_sessions,
             start_session,
             stop_session,
@@ -164,8 +164,8 @@ class TestMultipleConcurrentSessions:
         assert len(final_active) == 0
 
     def test_stop_all_sessions(self):
-        from grouper.database.activities import get_or_create_activity
-        from grouper.database.sessions import (
+        from desktop.database.activities import get_or_create_activity
+        from desktop.database.sessions import (
             get_active_sessions,
             start_session,
             stop_all_sessions,
@@ -196,11 +196,11 @@ class TestMultipleConcurrentSessions:
 
 class TestSessionTaskAttribution:
     def test_session_with_task_id(self):
-        import grouper.database.boards as boards
-        import grouper.database.projects as projects
-        import grouper.database.tasks as tasks
-        from grouper.database.activities import get_or_create_activity
-        from grouper.database.sessions import (
+        import desktop.database.boards as boards
+        import desktop.database.projects as projects
+        import desktop.database.tasks as tasks
+        from desktop.database.activities import get_or_create_activity
+        from desktop.database.sessions import (
             get_sessions,
             start_session,
             stop_session,
@@ -233,8 +233,8 @@ class TestSessionTaskAttribution:
 
 class TestRetroactiveLogging:
     def test_log_session_appears_in_history(self):
-        from grouper.database.activities import get_or_create_activity
-        from grouper.database.sessions import get_sessions, log_session
+        from desktop.database.activities import get_or_create_activity
+        from desktop.database.sessions import get_sessions, log_session
 
         get_or_create_activity("PastWork")
 
@@ -260,8 +260,8 @@ class TestRetroactiveLogging:
         assert duration == 7200  # 2 hours
 
     def test_log_session_appears_in_summary(self):
-        from grouper.database.activities import get_or_create_activity
-        from grouper.database.sessions import get_summary, log_session
+        from desktop.database.activities import get_or_create_activity
+        from desktop.database.sessions import get_summary, log_session
 
         get_or_create_activity("SummaryWork")
 
@@ -280,8 +280,8 @@ class TestRetroactiveLogging:
         assert summary["SummaryWork"] == 5400  # 90 minutes
 
     def test_multiple_retroactive_sessions_sum_correctly(self):
-        from grouper.database.activities import get_or_create_activity
-        from grouper.database.sessions import get_summary, log_session
+        from desktop.database.activities import get_or_create_activity
+        from desktop.database.sessions import get_summary, log_session
 
         get_or_create_activity("MultiLog")
 
@@ -311,7 +311,7 @@ class TestRetroactiveLogging:
 
 class TestEdgeCases:
     def test_pause_already_paused_returns_none(self):
-        from grouper.database.sessions import (
+        from desktop.database.sessions import (
             pause_session,
             start_session,
         )
@@ -324,7 +324,7 @@ class TestEdgeCases:
         assert result is None
 
     def test_resume_not_paused_returns_none(self):
-        from grouper.database.sessions import (
+        from desktop.database.sessions import (
             resume_session,
             start_session,
         )
@@ -336,19 +336,19 @@ class TestEdgeCases:
         assert result is None
 
     def test_stop_nonexistent_activity_returns_empty(self):
-        from grouper.database.sessions import stop_session
+        from desktop.database.sessions import stop_session
 
         result = stop_session("NoSuchActivity")
         assert result == []
 
     def test_get_active_session_by_activity_returns_none_for_unknown(self):
-        from grouper.database.sessions import get_active_session_by_activity
+        from desktop.database.sessions import get_active_session_by_activity
 
         result = get_active_session_by_activity("DoesNotExist")
         assert result is None
 
     def test_stop_all_with_no_active_sessions(self):
-        from grouper.database.sessions import stop_all_sessions
+        from desktop.database.sessions import stop_all_sessions
 
         result = stop_all_sessions()
         assert result == []

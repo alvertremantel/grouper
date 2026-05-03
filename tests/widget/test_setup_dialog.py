@@ -1,4 +1,4 @@
-"""Tests for the SetupDialog start-screen flow in grouper_install/setup.py."""
+"""Tests for the SetupDialog start-screen flow in installer/setup.py."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-from grouper_install.setup import (
+from installer.setup import (
     _PAGE_COMPLETE,
     _PAGE_INSTALL,
     _PAGE_START,
@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
 
 @pytest.fixture
 def dialog(qapp: QApplication, monkeypatch: pytest.MonkeyPatch) -> Generator[SetupDialog, None, None]:
-    monkeypatch.setattr("grouper_install.setup.read_manifest", lambda: None)
+    monkeypatch.setattr("installer.setup.read_manifest", lambda: None)
     d = SetupDialog()
     yield d
     d.close()
@@ -77,9 +77,9 @@ class TestStartScreen:
         with (
             pytest.MonkeyPatch().context() as mp,
         ):
-            mp.setattr("grouper_install.setup._source_root", lambda: tmp_path)
-            mp.setattr("grouper_install.setup.is_elevated", lambda: False)
-            mp.setattr("grouper_install.setup.read_manifest", lambda: None)
+            mp.setattr("installer.setup._source_root", lambda: tmp_path)
+            mp.setattr("installer.setup.is_elevated", lambda: False)
+            mp.setattr("installer.setup.read_manifest", lambda: None)
             d = SetupDialog()
             try:
                 page = d._start_page
@@ -118,7 +118,7 @@ class TestUninstallPlaceholder:
             json.dumps(manifest_data), encoding="utf-8"
         )
         with pytest.MonkeyPatch().context() as mp:
-            mp.setattr("grouper_install.setup.read_manifest", lambda: type(
+            mp.setattr("installer.setup.read_manifest", lambda: type(
                 "M", (), {
                     "version": "1.0.0",
                     "variant": "core",
@@ -165,8 +165,8 @@ class TestUninstallConfirmPage:
                 "manifest_version": "1",
             }
         )()
-        monkeypatch.setattr("grouper_install.setup.is_elevated", lambda: True)
-        monkeypatch.setattr("grouper_install.setup.read_manifest", lambda: fake_manifest)
+        monkeypatch.setattr("installer.setup.is_elevated", lambda: True)
+        monkeypatch.setattr("installer.setup.read_manifest", lambda: fake_manifest)
         d = SetupDialog()
         try:
             _click(d._btn_uninstall)
@@ -189,8 +189,8 @@ class TestUninstallConfirmPage:
                 "manifest_version": "1",
             }
         )()
-        monkeypatch.setattr("grouper_install.setup.is_elevated", lambda: True)
-        monkeypatch.setattr("grouper_install.setup.read_manifest", lambda: fake_manifest)
+        monkeypatch.setattr("installer.setup.is_elevated", lambda: True)
+        monkeypatch.setattr("installer.setup.read_manifest", lambda: fake_manifest)
         d = SetupDialog()
         try:
             _click(d._btn_uninstall)
@@ -217,11 +217,11 @@ class TestUninstallExecution:
                 "manifest_version": "1",
             }
         )()
-        monkeypatch.setattr("grouper_install.setup.is_elevated", lambda: True)
-        monkeypatch.setattr("grouper_install.setup.read_manifest", lambda: fake_manifest)
-        monkeypatch.setattr("grouper_install.setup.unregister_uninstall", lambda: None)
-        monkeypatch.setattr("grouper_install.setup.remove_manifest", lambda: None)
-        monkeypatch.setattr("grouper_install.setup.remove_from_machine_path", lambda d: True)
+        monkeypatch.setattr("installer.setup.is_elevated", lambda: True)
+        monkeypatch.setattr("installer.setup.read_manifest", lambda: fake_manifest)
+        monkeypatch.setattr("installer.setup.unregister_uninstall", lambda: None)
+        monkeypatch.setattr("installer.setup.remove_manifest", lambda: None)
+        monkeypatch.setattr("installer.setup.remove_from_machine_path", lambda d: True)
         d = SetupDialog()
         try:
             d._run_uninstall()
@@ -247,11 +247,11 @@ class TestUninstallExecution:
                 "manifest_version": "1",
             }
         )()
-        monkeypatch.setattr("grouper_install.setup.is_elevated", lambda: True)
-        monkeypatch.setattr("grouper_install.setup.read_manifest", lambda: fake_manifest)
-        monkeypatch.setattr("grouper_install.setup.unregister_uninstall", lambda: None)
-        monkeypatch.setattr("grouper_install.setup.remove_manifest", lambda: None)
-        monkeypatch.setattr("grouper_install.setup.remove_from_machine_path", lambda d: False)
+        monkeypatch.setattr("installer.setup.is_elevated", lambda: True)
+        monkeypatch.setattr("installer.setup.read_manifest", lambda: fake_manifest)
+        monkeypatch.setattr("installer.setup.unregister_uninstall", lambda: None)
+        monkeypatch.setattr("installer.setup.remove_manifest", lambda: None)
+        monkeypatch.setattr("installer.setup.remove_from_machine_path", lambda d: False)
         d = SetupDialog()
         try:
             d._run_uninstall()
@@ -277,10 +277,10 @@ class TestUninstallExecution:
                 "manifest_version": "1",
             }
         )()
-        monkeypatch.setattr("grouper_install.setup.is_elevated", lambda: True)
-        monkeypatch.setattr("grouper_install.setup.read_manifest", lambda: fake_manifest)
-        monkeypatch.setattr("grouper_install.setup.unregister_uninstall", lambda: None)
-        monkeypatch.setattr("grouper_install.setup.remove_manifest", lambda: None)
+        monkeypatch.setattr("installer.setup.is_elevated", lambda: True)
+        monkeypatch.setattr("installer.setup.read_manifest", lambda: fake_manifest)
+        monkeypatch.setattr("installer.setup.unregister_uninstall", lambda: None)
+        monkeypatch.setattr("installer.setup.remove_manifest", lambda: None)
         d = SetupDialog()
         try:
             d._run_uninstall()
@@ -313,9 +313,9 @@ class TestInstallPageDestinations:
         (tmp_path / "cli" / "grouper-cli.exe").touch()
 
         with pytest.MonkeyPatch().context() as mp:
-            mp.setattr("grouper_install.setup._source_root", lambda: tmp_path)
-            mp.setattr("grouper_install.setup.is_elevated", lambda: False)
-            mp.setattr("grouper_install.setup.read_manifest", lambda: None)
+            mp.setattr("installer.setup._source_root", lambda: tmp_path)
+            mp.setattr("installer.setup.is_elevated", lambda: False)
+            mp.setattr("installer.setup.read_manifest", lambda: None)
             d = SetupDialog()
             try:
                 d._show_install_page()
@@ -329,9 +329,9 @@ class TestInstallPageDestinations:
         (tmp_path / "app" / "grouper.exe").touch()
 
         with pytest.MonkeyPatch().context() as mp:
-            mp.setattr("grouper_install.setup._source_root", lambda: tmp_path)
-            mp.setattr("grouper_install.setup.is_elevated", lambda: False)
-            mp.setattr("grouper_install.setup.read_manifest", lambda: None)
+            mp.setattr("installer.setup._source_root", lambda: tmp_path)
+            mp.setattr("installer.setup.is_elevated", lambda: False)
+            mp.setattr("installer.setup.read_manifest", lambda: None)
             d = SetupDialog()
             try:
                 d._show_install_page()
@@ -347,9 +347,9 @@ class TestInstallPageDestinations:
         (tmp_path / "cli" / "grouper-cli.exe").touch()
 
         with pytest.MonkeyPatch().context() as mp:
-            mp.setattr("grouper_install.setup._source_root", lambda: tmp_path)
-            mp.setattr("grouper_install.setup.is_elevated", lambda: False)
-            mp.setattr("grouper_install.setup.read_manifest", lambda: None)
+            mp.setattr("installer.setup._source_root", lambda: tmp_path)
+            mp.setattr("installer.setup.is_elevated", lambda: False)
+            mp.setattr("installer.setup.read_manifest", lambda: None)
             d = SetupDialog()
             try:
                 d._show_install_page()
@@ -364,9 +364,9 @@ class TestInstallPageDestinations:
         (tmp_path / "app" / "grouper.exe").touch()
 
         with pytest.MonkeyPatch().context() as mp:
-            mp.setattr("grouper_install.setup._source_root", lambda: tmp_path)
-            mp.setattr("grouper_install.setup.is_elevated", lambda: False)
-            mp.setattr("grouper_install.setup.read_manifest", lambda: None)
+            mp.setattr("installer.setup._source_root", lambda: tmp_path)
+            mp.setattr("installer.setup.is_elevated", lambda: False)
+            mp.setattr("installer.setup.read_manifest", lambda: None)
             d = SetupDialog()
             try:
                 d._show_install_page()
@@ -383,18 +383,18 @@ class TestCompletePage:
         (tmp_path / "version.txt").write_text("1.0.0")
 
         with pytest.MonkeyPatch().context() as mp:
-            mp.setattr("grouper_install.setup._source_root", lambda: tmp_path)
-            mp.setattr("grouper_install.setup.is_elevated", lambda: True)
-            mp.setattr("grouper_install.setup.read_manifest", lambda: None)
-            mp.setattr("grouper_install.setup._copy_tree", lambda src, dst: None)
-            mp.setattr("grouper_install.setup._create_desktop_shortcut_dest", lambda app_dir: None)
-            mp.setattr("grouper_install.setup._create_start_menu_shortcut_dest", lambda app_dir: None)
-            mp.setattr("grouper_install.setup.add_to_machine_path", lambda d: False)
-            mp.setattr("grouper_install.setup.write_manifest", lambda m: None)
-            mp.setattr("grouper_install.setup.register_uninstall", lambda m: None)
-            mp.setattr("grouper_install.setup._copy_installer_to_stable_location", lambda: None)
-            mp.setattr("grouper_install.setup._desktop", lambda: tmp_path)
-            mp.setattr("grouper_install.setup._start_menu_programs", lambda: tmp_path)
+            mp.setattr("installer.setup._source_root", lambda: tmp_path)
+            mp.setattr("installer.setup.is_elevated", lambda: True)
+            mp.setattr("installer.setup.read_manifest", lambda: None)
+            mp.setattr("installer.setup._copy_tree", lambda src, dst: None)
+            mp.setattr("installer.setup._create_desktop_shortcut_dest", lambda app_dir: None)
+            mp.setattr("installer.setup._create_start_menu_shortcut_dest", lambda app_dir: None)
+            mp.setattr("installer.setup.add_to_machine_path", lambda d: False)
+            mp.setattr("installer.setup.write_manifest", lambda m: None)
+            mp.setattr("installer.setup.register_uninstall", lambda m: None)
+            mp.setattr("installer.setup._copy_installer_to_stable_location", lambda: None)
+            mp.setattr("installer.setup._desktop", lambda: tmp_path)
+            mp.setattr("installer.setup._start_menu_programs", lambda: tmp_path)
 
             d = SetupDialog()
             try:

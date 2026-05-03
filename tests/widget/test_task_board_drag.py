@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import ClassVar
 from unittest.mock import MagicMock, patch
 
-from grouper.models import Project, Task
-from grouper.ui.task_board import TASK_MIME_TYPE, ProjectColumn, TaskCard
+from desktop.models import Project, Task
+from desktop.ui.tasks.task_board import TASK_MIME_TYPE, ProjectColumn, TaskCard
 from PySide6.QtCore import QByteArray, QEvent, QMimeData, QPoint, QPointF, Qt
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QApplication, QWidget
@@ -99,7 +99,7 @@ def test_task_card_drag_initiation_sets_task_mime_payload(qapp: QApplication) ->
     start = QPoint(80, 24)
     end = QPoint(80 + QApplication.startDragDistance() + 8, 24)
 
-    with patch("grouper.ui.task_board.QDrag", _FakeDrag):
+    with patch("desktop.ui.tasks.task_board.QDrag", _FakeDrag):
         card.mousePressEvent(
             _mouse_event(
                 QEvent.Type.MouseButtonPress,
@@ -153,7 +153,7 @@ def test_task_card_click_toggles_expand_but_drag_does_not(qapp: QApplication) ->
     _FakeDrag.instances.clear()
     drag_end = QPoint(80 + QApplication.startDragDistance() + 8, 24)
 
-    with patch("grouper.ui.task_board.QDrag", _FakeDrag):
+    with patch("desktop.ui.tasks.task_board.QDrag", _FakeDrag):
         card.mousePressEvent(
             _mouse_event(
                 QEvent.Type.MouseButtonPress,
@@ -193,7 +193,7 @@ def test_project_column_drop_updates_task_project() -> None:
     event = MagicMock()
     event.mimeData.return_value = mime
 
-    with patch("grouper.ui.task_board.update_task") as mock_update:
+    with patch("desktop.ui.tasks.task_board.update_task") as mock_update:
         column.dropEvent(event)
 
     mock_update.assert_called_once_with(7, project_id=11)
@@ -210,7 +210,7 @@ def test_project_column_same_column_drop() -> None:
     event = MagicMock()
     event.mimeData.return_value = mime
 
-    with patch("grouper.ui.task_board.update_task") as mock_update:
+    with patch("desktop.ui.tasks.task_board.update_task") as mock_update:
         column.dropEvent(event)
 
     mock_update.assert_not_called()
@@ -227,7 +227,7 @@ def test_project_column_malformed_mime_drop() -> None:
     event = MagicMock()
     event.mimeData.return_value = mime
 
-    with patch("grouper.ui.task_board.update_task") as mock_update:
+    with patch("desktop.ui.tasks.task_board.update_task") as mock_update:
         column.dropEvent(event)
 
     mock_update.assert_not_called()
@@ -247,7 +247,7 @@ def test_checkbox_click_does_not_expand_card(qapp: QApplication) -> None:
     """Checkbox interaction should toggle completion without expanding the card."""
     card = _make_card(qapp)
 
-    with patch("grouper.ui.task_board.complete_task", return_value=[]):
+    with patch("desktop.ui.tasks.task_board.complete_task", return_value=[]):
         card._check.click()
         qapp.processEvents()
 

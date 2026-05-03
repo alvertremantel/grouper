@@ -218,7 +218,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-copy "%PROJECT_ROOT%\grouper_install\dist\%VARIANT_NAME%.toml" "%VARIANT_DIR%\dist.toml" >nul
+copy "%PROJECT_ROOT%\installer\dist\%VARIANT_NAME%.toml" "%VARIANT_DIR%\dist.toml" >nul
 if errorlevel 1 (
     echo ERROR: Failed to copy dist.toml to %VARIANT_NAME%
     exit /b 1

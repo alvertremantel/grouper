@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from grouper.ui.summary import SummaryView
+from desktop.ui.views.summary import SummaryView
 from grouper_core.database.boards import create_board
 from grouper_core.database.projects import create_project
 from grouper_core.database.tasks import create_task
@@ -92,19 +92,19 @@ def test_trend_bars_update_on_theme_switch(qapp):
     """MiniBarTrend bars must recompute their inline colors when the theme changes."""
     from unittest.mock import patch
 
-    from grouper.styles import load_theme
-    from grouper.ui.summary import MiniBarTrend
+    from desktop.styles import load_theme
+    from desktop.ui.views.summary import MiniBarTrend
 
     dark_cfg = type("C", (), {"theme": "dark"})()
     light_cfg = type("C", (), {"theme": "light"})()
 
-    with patch("grouper.ui.summary.get_config", return_value=dark_cfg):
+    with patch("desktop.ui.views.summary.get_config", return_value=dark_cfg):
         load_theme(qapp, "dark")
         chart = MiniBarTrend()
         chart.update_data([("M", 3600.0), ("T", 7200.0)], bar_width=22)
         old_sheet = chart._bars[0]._bar.styleSheet()
 
-    with patch("grouper.ui.summary.get_config", return_value=light_cfg):
+    with patch("desktop.ui.views.summary.get_config", return_value=light_cfg):
         load_theme(qapp, "light")
         qapp.processEvents()
 
@@ -118,19 +118,19 @@ def test_zero_trend_bars_use_active_theme_on_theme_switch(qapp):
     """Zero-value trend bars must derive from the active theme surface color."""
     from unittest.mock import patch
 
-    from grouper.styles import lerp_hex, load_theme, theme_colors
-    from grouper.ui.summary import MiniBarTrend
+    from desktop.styles import lerp_hex, load_theme, theme_colors
+    from desktop.ui.views.summary import MiniBarTrend
 
     dark_cfg = type("C", (), {"theme": "dark"})()
     sage_cfg = type("C", (), {"theme": "sage"})()
 
-    with patch("grouper.ui.summary.get_config", return_value=dark_cfg):
+    with patch("desktop.ui.views.summary.get_config", return_value=dark_cfg):
         load_theme(qapp, "dark")
         chart = MiniBarTrend()
         chart.update_data([("M", 0.0), ("T", 7200.0)], bar_width=22)
         old_zero_sheet = chart._bars[0]._bar.styleSheet()
 
-    with patch("grouper.ui.summary.get_config", return_value=sage_cfg):
+    with patch("desktop.ui.views.summary.get_config", return_value=sage_cfg):
         load_theme(qapp, "sage")
         qapp.processEvents()
 

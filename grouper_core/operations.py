@@ -1,6 +1,6 @@
 """operations.py — Shared business-logic helpers.
 
-Used by grouper_cli to avoid duplicating task update operations
+Used by the CLI package to avoid duplicating task update operations
 (tag sync, prerequisite sync).
 """
 
