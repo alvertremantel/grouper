@@ -18,25 +18,25 @@ import pytest
 
 
 def _make_board(name: str = "Test Board") -> int:
-    from grouper.database import create_board
+    from desktop.database import create_board
 
     return create_board(name).id
 
 
 def _make_project(board_id: int, name: str = "Test Project") -> int:
-    from grouper.database import create_project
+    from desktop.database import create_project
 
     return create_project(name, board_id).id
 
 
 def _make_task(project_id: int, title: str, **kwargs) -> int:
-    from grouper.database import create_task
+    from desktop.database import create_task
 
     return create_task(project_id, title, **kwargs).id
 
 
 def _make_activity(name: str, **kwargs) -> int:
-    from grouper.database.activities import create_activity
+    from desktop.database.activities import create_activity
 
     return create_activity(name, **kwargs).id
 
@@ -48,19 +48,19 @@ def _make_activity(name: str, **kwargs) -> int:
 
 class TestGetTagsForActivityIds:
     def test_empty_list_returns_empty_dict(self):
-        from grouper.database.tags import get_tags_for_activity_ids
+        from desktop.database.tags import get_tags_for_activity_ids
 
         assert get_tags_for_activity_ids([]) == {}
 
     def test_single_activity_no_tags(self):
-        from grouper.database.tags import get_tags_for_activity_ids
+        from desktop.database.tags import get_tags_for_activity_ids
 
         aid = _make_activity("Solo")
         result = get_tags_for_activity_ids([aid])
         assert result == {aid: []}
 
     def test_single_activity_with_tags(self):
-        from grouper.database.tags import (
+        from desktop.database.tags import (
             add_tag_to_activity,
             get_tags_for_activity_ids,
         )
@@ -72,7 +72,7 @@ class TestGetTagsForActivityIds:
         assert sorted(result[aid]) == ["alpha", "beta"]
 
     def test_multiple_activities_batch(self):
-        from grouper.database.tags import (
+        from desktop.database.tags import (
             add_tag_to_activity,
             get_tags_for_activity_ids,
         )
@@ -91,12 +91,12 @@ class TestGetTagsForActivityIds:
 
 class TestGetTagsForTaskIds:
     def test_empty_list_returns_empty_dict(self):
-        from grouper.database.tags import get_tags_for_task_ids
+        from desktop.database.tags import get_tags_for_task_ids
 
         assert get_tags_for_task_ids([]) == {}
 
     def test_batch_load_task_tags(self):
-        from grouper.database.tags import add_tag_to_task, get_tags_for_task_ids
+        from desktop.database.tags import add_tag_to_task, get_tags_for_task_ids
 
         bid = _make_board()
         pid = _make_project(bid)
@@ -112,21 +112,21 @@ class TestGetTagsForTaskIds:
 
 class TestEntityTagHelpers:
     def test_add_and_get_activity_tags(self):
-        from grouper.database.tags import add_tag_to_activity, get_activity_tags
+        from desktop.database.tags import add_tag_to_activity, get_activity_tags
 
         aid = _make_activity("Act1")
         assert add_tag_to_activity(aid, "foo") is True
         assert get_activity_tags(aid) == ["foo"]
 
     def test_add_duplicate_tag_returns_false(self):
-        from grouper.database.tags import add_tag_to_activity
+        from desktop.database.tags import add_tag_to_activity
 
         aid = _make_activity("Act2")
         assert add_tag_to_activity(aid, "dup") is True
         assert add_tag_to_activity(aid, "dup") is False
 
     def test_remove_activity_tag(self):
-        from grouper.database.tags import (
+        from desktop.database.tags import (
             add_tag_to_activity,
             get_activity_tags,
             remove_tag_from_activity,
@@ -138,13 +138,13 @@ class TestEntityTagHelpers:
         assert get_activity_tags(aid) == []
 
     def test_remove_nonexistent_tag_returns_false(self):
-        from grouper.database.tags import remove_tag_from_activity
+        from desktop.database.tags import remove_tag_from_activity
 
         aid = _make_activity("Act4")
         assert remove_tag_from_activity(aid, "nope") is False
 
     def test_add_and_get_task_tags(self):
-        from grouper.database.tags import add_tag_to_task, get_task_tags
+        from desktop.database.tags import add_tag_to_task, get_task_tags
 
         bid = _make_board()
         pid = _make_project(bid)
@@ -153,7 +153,7 @@ class TestEntityTagHelpers:
         assert get_task_tags(tid) == ["work"]
 
     def test_remove_task_tag(self):
-        from grouper.database.tags import (
+        from desktop.database.tags import (
             add_tag_to_task,
             get_task_tags,
             remove_tag_from_task,
@@ -167,7 +167,7 @@ class TestEntityTagHelpers:
         assert get_task_tags(tid) == []
 
     def test_add_and_get_project_tags(self):
-        from grouper.database.tags import add_tag_to_project, get_project_tags
+        from desktop.database.tags import add_tag_to_project, get_project_tags
 
         bid = _make_board("B-proj")
         pid = _make_project(bid, "P-tags")
@@ -182,19 +182,19 @@ class TestEntityTagHelpers:
 
 class TestGetGroupsForActivityIds:
     def test_empty_list(self):
-        from grouper.database.activities import get_groups_for_activity_ids
+        from desktop.database.activities import get_groups_for_activity_ids
 
         assert get_groups_for_activity_ids([]) == {}
 
     def test_single_activity_no_groups(self):
-        from grouper.database.activities import get_groups_for_activity_ids
+        from desktop.database.activities import get_groups_for_activity_ids
 
         aid = _make_activity("NoGroup")
         result = get_groups_for_activity_ids([aid])
         assert result == {aid: []}
 
     def test_single_activity_with_groups(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             get_groups_for_activity_ids,
         )
@@ -206,7 +206,7 @@ class TestGetGroupsForActivityIds:
         assert sorted(result[aid]) == ["Dev", "Work"]
 
     def test_multiple_activities_batch(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             get_groups_for_activity_ids,
         )
@@ -222,11 +222,11 @@ class TestGetGroupsForActivityIds:
 
 class TestListActivitiesBatchRelations:
     def test_list_activities_has_groups_and_tags(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             list_activities,
         )
-        from grouper.database.tags import add_tag_to_activity
+        from desktop.database.tags import add_tag_to_activity
 
         aid = _make_activity("WithRelations")
         add_activity_group(aid, "MyGroup")
@@ -252,7 +252,7 @@ class TestPrerequisiteCycleDetection:
         return pid
 
     def test_valid_prerequisite_succeeds(self):
-        from grouper.database.prerequisites import add_prerequisite, get_prerequisite_ids
+        from desktop.database.prerequisites import add_prerequisite, get_prerequisite_ids
 
         pid = self._setup_tasks()
         t1 = _make_task(pid, "Task 1")
@@ -261,7 +261,7 @@ class TestPrerequisiteCycleDetection:
         assert t2 in get_prerequisite_ids(t1)
 
     def test_self_reference_rejected(self):
-        from grouper.database.prerequisites import add_prerequisite, get_prerequisite_ids
+        from desktop.database.prerequisites import add_prerequisite, get_prerequisite_ids
 
         pid = self._setup_tasks()
         t1 = _make_task(pid, "Self Ref")
@@ -269,7 +269,7 @@ class TestPrerequisiteCycleDetection:
         assert get_prerequisite_ids(t1) == []
 
     def test_direct_cycle_ab_ba_rejected(self):
-        from grouper.database.prerequisites import add_prerequisite, get_prerequisite_ids
+        from desktop.database.prerequisites import add_prerequisite, get_prerequisite_ids
 
         pid = self._setup_tasks()
         ta = _make_task(pid, "A")
@@ -281,7 +281,7 @@ class TestPrerequisiteCycleDetection:
         assert ta not in get_prerequisite_ids(tb)
 
     def test_transitive_cycle_abc_rejected(self):
-        from grouper.database.prerequisites import add_prerequisite, get_prerequisite_ids
+        from desktop.database.prerequisites import add_prerequisite, get_prerequisite_ids
 
         pid = self._setup_tasks()
         ta = _make_task(pid, "X")
@@ -299,8 +299,8 @@ class TestPrerequisiteCycleDetection:
 
 class TestGetPrerequisiteTasks:
     def test_returns_tasks_with_tags(self):
-        from grouper.database.prerequisites import add_prerequisite, get_prerequisite_tasks
-        from grouper.database.tags import add_tag_to_task
+        from desktop.database.prerequisites import add_prerequisite, get_prerequisite_tasks
+        from desktop.database.tags import add_tag_to_task
 
         bid = _make_board("PT Board")
         pid = _make_project(bid, "PT Project")
@@ -315,7 +315,7 @@ class TestGetPrerequisiteTasks:
         assert "blocker" in prereqs[0].tags
 
     def test_returns_empty_when_no_prereqs(self):
-        from grouper.database.prerequisites import get_prerequisite_tasks
+        from desktop.database.prerequisites import get_prerequisite_tasks
 
         bid = _make_board("Empty Board")
         pid = _make_project(bid, "Empty Project")
@@ -325,8 +325,8 @@ class TestGetPrerequisiteTasks:
 
 class TestGetUnmetPrerequisites:
     def test_returns_only_incomplete(self):
-        from grouper.database.prerequisites import add_prerequisite, get_unmet_prerequisites
-        from grouper.database.tasks import complete_task
+        from desktop.database.prerequisites import add_prerequisite, get_unmet_prerequisites
+        from desktop.database.tasks import complete_task
 
         bid = _make_board("Unmet Board")
         pid = _make_project(bid, "Unmet Project")
@@ -345,8 +345,8 @@ class TestGetUnmetPrerequisites:
         assert "Done" not in titles
 
     def test_returns_empty_when_all_complete(self):
-        from grouper.database.prerequisites import add_prerequisite, get_unmet_prerequisites
-        from grouper.database.tasks import complete_task
+        from desktop.database.prerequisites import add_prerequisite, get_unmet_prerequisites
+        from desktop.database.tasks import complete_task
 
         bid = _make_board("AllDone Board")
         pid = _make_project(bid, "AllDone Project")
@@ -365,59 +365,59 @@ class TestGetUnmetPrerequisites:
 
 class TestFormatDuration:
     def test_zero_seconds(self):
-        from grouper.formatting import format_duration
+        from desktop.formatting import format_duration
 
         assert format_duration(0) == "0h 00m 00s"
 
     def test_sixty_seconds(self):
-        from grouper.formatting import format_duration
+        from desktop.formatting import format_duration
 
         assert format_duration(60) == "0h 01m 00s"
 
     def test_one_hour(self):
-        from grouper.formatting import format_duration
+        from desktop.formatting import format_duration
 
         assert format_duration(3600) == "1h 00m 00s"
 
     def test_complex_duration(self):
-        from grouper.formatting import format_duration
+        from desktop.formatting import format_duration
 
         assert format_duration(3661) == "1h 01m 01s"
 
     def test_large_value(self):
-        from grouper.formatting import format_duration
+        from desktop.formatting import format_duration
 
         assert format_duration(86400) == "24h 00m 00s"
 
     def test_float_input_truncated(self):
-        from grouper.formatting import format_duration
+        from desktop.formatting import format_duration
 
         assert format_duration(61.9) == "0h 01m 01s"
 
 
 class TestDefaultJsonSerializer:
     def test_datetime_serialization(self):
-        from grouper.formatting import default_json_serializer
+        from desktop.formatting import default_json_serializer
 
         dt = datetime(2025, 1, 15, 10, 30, 0)
         result = default_json_serializer(dt)
         assert result == "2025-01-15T10:30:00"
 
     def test_timedelta_serialization(self):
-        from grouper.formatting import default_json_serializer
+        from desktop.formatting import default_json_serializer
 
         td = timedelta(hours=1, minutes=30)
         result = default_json_serializer(td)
         assert result == 5400
 
     def test_unsupported_type_raises(self):
-        from grouper.formatting import default_json_serializer
+        from desktop.formatting import default_json_serializer
 
         with pytest.raises(TypeError, match="not JSON serialisable"):
             default_json_serializer({"key": "value"})
 
     def test_works_with_json_dumps(self):
-        from grouper.formatting import default_json_serializer
+        from desktop.formatting import default_json_serializer
 
         data = {
             "when": datetime(2025, 6, 1, 12, 0),
@@ -430,8 +430,8 @@ class TestDefaultJsonSerializer:
 
 class TestFilterUpcomingTasks:
     def test_filters_by_due_date_window(self):
-        from grouper.formatting import filter_upcoming_tasks
-        from grouper.models import Task
+        from desktop.formatting import filter_upcoming_tasks
+        from desktop.models import Task
 
         now = datetime.now()
         tasks = [
@@ -448,8 +448,8 @@ class TestFilterUpcomingTasks:
         assert "far future" not in titles
 
     def test_excludes_completed_tasks(self):
-        from grouper.formatting import filter_upcoming_tasks
-        from grouper.models import Task
+        from desktop.formatting import filter_upcoming_tasks
+        from desktop.models import Task
 
         now = datetime.now()
         tasks = [
@@ -461,15 +461,15 @@ class TestFilterUpcomingTasks:
         assert result[0].title == "active"
 
     def test_excludes_tasks_without_due_date(self):
-        from grouper.formatting import filter_upcoming_tasks
-        from grouper.models import Task
+        from desktop.formatting import filter_upcoming_tasks
+        from desktop.models import Task
 
         tasks = [Task(title="no date", due_date=None)]
         assert filter_upcoming_tasks(tasks) == []
 
     def test_respects_limit(self):
-        from grouper.formatting import filter_upcoming_tasks
-        from grouper.models import Task
+        from desktop.formatting import filter_upcoming_tasks
+        from desktop.models import Task
 
         now = datetime.now()
         tasks = [Task(title=f"t{i}", due_date=now + timedelta(hours=i + 1)) for i in range(20)]
@@ -477,8 +477,8 @@ class TestFilterUpcomingTasks:
         assert len(result) == 3
 
     def test_sorted_by_due_date(self):
-        from grouper.formatting import filter_upcoming_tasks
-        from grouper.models import Task
+        from desktop.formatting import filter_upcoming_tasks
+        from desktop.models import Task
 
         now = datetime.now()
         tasks = [
@@ -497,13 +497,13 @@ class TestFilterUpcomingTasks:
 
 class TestDBRowProtocol:
     def test_dict_satisfies_protocol(self):
-        from grouper.models import DBRow
+        from desktop.models import DBRow
 
         d = {"id": 1, "name": "test"}
         assert isinstance(d, DBRow)
 
     def test_sqlite_row_like_object(self):
-        from grouper.models import DBRow
+        from desktop.models import DBRow
 
         class FakeRow:
             def __getitem__(self, key: str):
@@ -519,7 +519,7 @@ class TestCoerceDtAttrs:
     def test_parses_iso_string(self):
         from dataclasses import dataclass
 
-        from grouper.models import _coerce_dt_attrs
+        from desktop.models import _coerce_dt_attrs
 
         @dataclass
         class Obj:
@@ -535,7 +535,7 @@ class TestCoerceDtAttrs:
     def test_leaves_none_alone(self):
         from dataclasses import dataclass
 
-        from grouper.models import _coerce_dt_attrs
+        from desktop.models import _coerce_dt_attrs
 
         @dataclass
         class Obj:
@@ -548,7 +548,7 @@ class TestCoerceDtAttrs:
     def test_leaves_datetime_alone(self):
         from dataclasses import dataclass
 
-        from grouper.models import _coerce_dt_attrs
+        from desktop.models import _coerce_dt_attrs
 
         dt = datetime(2025, 1, 1)
 
@@ -563,19 +563,19 @@ class TestCoerceDtAttrs:
 
 class TestTaskPriorityClamping:
     def test_clamp_negative_to_zero(self):
-        from grouper.models import Task
+        from desktop.models import Task
 
         t = Task(priority=-5)
         assert t.priority == 0
 
     def test_clamp_above_four_to_four(self):
-        from grouper.models import Task
+        from desktop.models import Task
 
         t = Task(priority=10)
         assert t.priority == 4
 
     def test_valid_priorities_unchanged(self):
-        from grouper.models import Task
+        from desktop.models import Task
 
         for p in range(5):
             assert Task(priority=p).priority == p
@@ -583,19 +583,19 @@ class TestTaskPriorityClamping:
 
 class TestPauseEventType:
     def test_accepts_pause(self):
-        from grouper.models import PauseEvent
+        from desktop.models import PauseEvent
 
         pe = PauseEvent(event_type="pause")
         assert pe.event_type == "pause"
 
     def test_accepts_resume(self):
-        from grouper.models import PauseEvent
+        from desktop.models import PauseEvent
 
         pe = PauseEvent(event_type="resume")
         assert pe.event_type == "resume"
 
     def test_coerces_event_time_string(self):
-        from grouper.models import PauseEvent
+        from desktop.models import PauseEvent
 
         pe = PauseEvent(event_type="pause", event_time="2025-06-01T12:00:00")
         assert isinstance(pe.event_time, datetime)
@@ -614,16 +614,16 @@ class TestSyncTaskTags:
         return pid, tid
 
     def test_sets_tags_on_untagged_task(self):
-        from grouper.database.tags import get_task_tags
-        from grouper.operations import sync_task_tags
+        from desktop.database.tags import get_task_tags
+        from desktop.operations import sync_task_tags
 
         _, tid = self._setup()
         sync_task_tags(tid, ["alpha", "beta"])
         assert sorted(get_task_tags(tid)) == ["alpha", "beta"]
 
     def test_replaces_existing_tags(self):
-        from grouper.database.tags import add_tag_to_task, get_task_tags
-        from grouper.operations import sync_task_tags
+        from desktop.database.tags import add_tag_to_task, get_task_tags
+        from desktop.operations import sync_task_tags
 
         _, tid = self._setup()
         add_tag_to_task(tid, "old1")
@@ -632,8 +632,8 @@ class TestSyncTaskTags:
         assert get_task_tags(tid) == ["new1"]
 
     def test_clears_tags_with_empty_list(self):
-        from grouper.database.tags import add_tag_to_task, get_task_tags
-        from grouper.operations import sync_task_tags
+        from desktop.database.tags import add_tag_to_task, get_task_tags
+        from desktop.operations import sync_task_tags
 
         _, tid = self._setup()
         add_tag_to_task(tid, "gone")
@@ -651,16 +651,16 @@ class TestSyncTaskPrerequisites:
         return pid, t1, t2, t3
 
     def test_sets_prerequisites(self):
-        from grouper.database.prerequisites import get_prerequisite_ids
-        from grouper.operations import sync_task_prerequisites
+        from desktop.database.prerequisites import get_prerequisite_ids
+        from desktop.operations import sync_task_prerequisites
 
         _, t1, t2, t3 = self._setup()
         sync_task_prerequisites(t1, [t2, t3])
         assert sorted(get_prerequisite_ids(t1)) == sorted([t2, t3])
 
     def test_replaces_prerequisites(self):
-        from grouper.database.prerequisites import add_prerequisite, get_prerequisite_ids
-        from grouper.operations import sync_task_prerequisites
+        from desktop.database.prerequisites import add_prerequisite, get_prerequisite_ids
+        from desktop.operations import sync_task_prerequisites
 
         _, t1, t2, t3 = self._setup()
         add_prerequisite(t1, t2)
@@ -670,8 +670,8 @@ class TestSyncTaskPrerequisites:
         assert t2 not in ids
 
     def test_clears_prerequisites_with_empty_list(self):
-        from grouper.database.prerequisites import add_prerequisite, get_prerequisite_ids
-        from grouper.operations import sync_task_prerequisites
+        from desktop.database.prerequisites import add_prerequisite, get_prerequisite_ids
+        from desktop.operations import sync_task_prerequisites
 
         _, t1, t2, _ = self._setup()
         add_prerequisite(t1, t2)
@@ -686,13 +686,13 @@ class TestSyncTaskPrerequisites:
 
 class TestDefaultBoardProtection:
     def test_delete_default_board_fails(self):
-        from grouper.database.boards import delete_board, get_or_create_default_board
+        from desktop.database.boards import delete_board, get_or_create_default_board
 
         default = get_or_create_default_board()
         assert delete_board(default.id) is False
 
     def test_delete_non_default_board_succeeds(self):
-        from grouper.database.boards import (
+        from desktop.database.boards import (
             create_board,
             delete_board,
             get_board_by_id,
@@ -703,7 +703,7 @@ class TestDefaultBoardProtection:
         assert get_board_by_id(board.id) is None
 
     def test_default_board_protection_not_hardcoded_to_id_1(self):
-        from grouper.database.boards import (
+        from desktop.database.boards import (
             create_board,
             delete_board,
             get_or_create_default_board,
@@ -724,7 +724,7 @@ class TestDefaultBoardProtection:
 
 class TestSessionsEdgeCases:
     def test_get_sessions_no_matching_activity_returns_empty(self):
-        from grouper.database.sessions import get_sessions
+        from desktop.database.sessions import get_sessions
 
         result = get_sessions(activity_name="nonexistent_activity_xyz")
         assert result == []
@@ -732,7 +732,7 @@ class TestSessionsEdgeCases:
     def test_get_sessions_date_range_filters_correctly(self):
         from datetime import datetime, timedelta
 
-        from grouper.database.sessions import get_sessions, log_session
+        from desktop.database.sessions import get_sessions, log_session
 
         base = datetime(2025, 6, 15, 12, 0, 0)
         log_session("RangeTest", timedelta(minutes=30), date=base)
@@ -747,13 +747,13 @@ class TestSessionsEdgeCases:
         assert len(result) == 2
 
     def test_stop_session_nonexistent_activity_returns_empty(self):
-        from grouper.database.sessions import stop_session
+        from desktop.database.sessions import stop_session
 
         result = stop_session("totally_fake_activity_999")
         assert result == []
 
     def test_get_active_sessions_returns_only_without_end_time(self):
-        from grouper.database.sessions import (
+        from desktop.database.sessions import (
             get_active_sessions,
             start_session,
             stop_session,
@@ -779,12 +779,12 @@ class TestSessionsEdgeCases:
 
 class TestActivitiesEdgeCases:
     def test_get_activity_nonexistent_returns_none(self):
-        from grouper.database.activities import get_activity
+        from desktop.database.activities import get_activity
 
         assert get_activity("absolutely_no_such_activity") is None
 
     def test_rename_activity_with_duplicate_name_returns_none(self):
-        from grouper.database.activities import rename_activity_by_id
+        from desktop.database.activities import rename_activity_by_id
 
         a1 = _make_activity("OrigName1")
         _make_activity("OrigName2")
@@ -792,7 +792,7 @@ class TestActivitiesEdgeCases:
         assert result is None
 
     def test_list_activities_include_deleted(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             list_activities,
             soft_delete_activity,
         )
@@ -810,7 +810,7 @@ class TestActivitiesEdgeCases:
         assert "SoonDeleted" in names_with
 
     def test_soft_delete_marks_activity_as_deleted(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             get_activity_by_id,
             soft_delete_activity,
         )
@@ -830,20 +830,20 @@ class TestActivitiesEdgeCases:
 
 class TestEventsEdgeCases:
     def test_list_events_for_range_start_ge_end_returns_empty(self):
-        from grouper.database.events import list_events_for_range
+        from desktop.database.events import list_events_for_range
 
         now = datetime(2025, 6, 15, 12, 0, 0)
         assert list_events_for_range(now, now) == []
         assert list_events_for_range(now + timedelta(hours=1), now) == []
 
     def test_get_event_nonexistent_returns_none(self):
-        from grouper.database.events import get_event
+        from desktop.database.events import get_event
 
         assert get_event(999999) is None
 
     def test_create_and_get_event_round_trip(self):
-        from grouper.database.calendars import get_default_calendar_id
-        from grouper.database.events import create_event, get_event
+        from desktop.database.calendars import get_default_calendar_id
+        from desktop.database.events import create_event, get_event
 
         cal_id = get_default_calendar_id()
         start = datetime(2025, 7, 1, 10, 0, 0)
@@ -875,14 +875,14 @@ class TestEventsEdgeCases:
 
 class TestCalendarsEdgeCases:
     def test_get_default_calendar_id_returns_valid_id(self):
-        from grouper.database.calendars import get_default_calendar_id
+        from desktop.database.calendars import get_default_calendar_id
 
         cal_id = get_default_calendar_id()
         assert isinstance(cal_id, int)
         assert cal_id > 0
 
     def test_set_and_get_default_calendar_round_trip(self):
-        from grouper.database.calendars import (
+        from desktop.database.calendars import (
             create_calendar,
             get_default_calendar_id,
             set_default_calendar,
@@ -900,43 +900,43 @@ class TestCalendarsEdgeCases:
 
 class TestConfigValidation:
     def test_port_below_range_clamped(self):
-        from grouper.config import Config
+        from desktop.config import Config
 
         c = Config(web_port=80)
         assert c.web_port == 1024
 
     def test_port_above_range_clamped(self):
-        from grouper.config import Config
+        from desktop.config import Config
 
         c = Config(web_port=70000)
         assert c.web_port == 65535
 
     def test_negative_window_width_clamped(self):
-        from grouper.config import Config
+        from desktop.config import Config
 
         c = Config(window_width=-100)
         assert c.window_width == 400
 
     def test_negative_window_height_clamped(self):
-        from grouper.config import Config
+        from desktop.config import Config
 
         c = Config(window_height=-50)
         assert c.window_height == 300
 
     def test_priority_above_four_clamped(self):
-        from grouper.config import Config
+        from desktop.config import Config
 
         c = Config(default_priority=10)
         assert c.default_priority == 4
 
     def test_priority_zero_allowed(self):
-        from grouper.config import Config
+        from desktop.config import Config
 
         c = Config(default_priority=0)
         assert c.default_priority == 0
 
     def test_priority_below_zero_clamped(self):
-        from grouper.config import Config
+        from desktop.config import Config
 
         c = Config(default_priority=-1)
         assert c.default_priority == 0
@@ -949,8 +949,8 @@ class TestConfigValidation:
 
 class TestFormatSessionEdgeCases:
     def test_active_session_returns_valid_dict(self):
-        from grouper.formatting import format_session
-        from grouper.models import Session
+        from desktop.formatting import format_session
+        from desktop.models import Session
 
         s = Session(
             id=1,
@@ -966,8 +966,8 @@ class TestFormatSessionEdgeCases:
         assert isinstance(result["duration_formatted"], str)
 
     def test_paused_session_excludes_paused_time(self):
-        from grouper.formatting import format_session
-        from grouper.models import Session
+        from desktop.formatting import format_session
+        from desktop.models import Session
 
         now = datetime.now()
         s = Session(
@@ -985,7 +985,7 @@ class TestFormatSessionEdgeCases:
 
 class TestFormatDurationEdgeCases:
     def test_negative_input_handled(self):
-        from grouper.formatting import format_duration
+        from desktop.formatting import format_duration
 
         result = format_duration(-100)
         # int(-100) divmod produces negative results; the function should
@@ -995,7 +995,7 @@ class TestFormatDurationEdgeCases:
 
 class TestFilterUpcomingTasksEdgeCases:
     def test_empty_list_returns_empty(self):
-        from grouper.formatting import filter_upcoming_tasks
+        from desktop.formatting import filter_upcoming_tasks
 
         assert filter_upcoming_tasks([]) == []
 
@@ -1004,7 +1004,7 @@ class TestDefaultJsonSerializerEdgeCases:
     def test_date_object_raises_type_error(self):
         from datetime import date
 
-        from grouper.formatting import default_json_serializer
+        from desktop.formatting import default_json_serializer
 
         # date is not datetime, so the isinstance(obj, datetime) check
         # won't match; the function should raise TypeError
@@ -1019,21 +1019,21 @@ class TestDefaultJsonSerializerEdgeCases:
 
 class TestWebServerCSS:
     def test_get_css_returns_nonempty_string(self):
-        from grouper.web_server import _get_css
+        from desktop.web_server import _get_css
 
         css = _get_css()
         assert isinstance(css, str)
         assert len(css) > 0
 
     def test_get_css_returns_same_on_repeated_calls(self):
-        from grouper.web_server import _get_css
+        from desktop.web_server import _get_css
 
         first = _get_css()
         second = _get_css()
         assert first is second
 
     def test_build_css_returns_valid_css_string(self):
-        from grouper.web_server import _build_css
+        from desktop.web_server import _build_css
 
         css = _build_css()
         assert isinstance(css, str)
@@ -1055,8 +1055,8 @@ class TestSyncTaskTagsEdgeCases:
         return pid, tid
 
     def test_empty_list_clears_all_tags(self):
-        from grouper.database.tags import add_tag_to_task, get_task_tags
-        from grouper.operations import sync_task_tags
+        from desktop.database.tags import add_tag_to_task, get_task_tags
+        from desktop.operations import sync_task_tags
 
         _, tid = self._setup()
         add_tag_to_task(tid, "a")
@@ -1066,8 +1066,8 @@ class TestSyncTaskTagsEdgeCases:
         assert get_task_tags(tid) == []
 
     def test_idempotent_same_list_twice(self):
-        from grouper.database.tags import get_task_tags
-        from grouper.operations import sync_task_tags
+        from desktop.database.tags import get_task_tags
+        from desktop.operations import sync_task_tags
 
         _, tid = self._setup()
         sync_task_tags(tid, ["x", "y"])
@@ -1086,8 +1086,8 @@ class TestSyncTaskPrerequisitesEdgeCases:
         return pid, t1, t2
 
     def test_add_to_task_with_no_existing_prerequisites(self):
-        from grouper.database.prerequisites import get_prerequisite_ids
-        from grouper.operations import sync_task_prerequisites
+        from desktop.database.prerequisites import get_prerequisite_ids
+        from desktop.operations import sync_task_prerequisites
 
         _, t1, t2 = self._setup()
         # t1 starts with no prerequisites
@@ -1103,42 +1103,42 @@ class TestSyncTaskPrerequisitesEdgeCases:
 
 class TestParseVersion:
     def test_simple_release(self):
-        from grouper.version_check import _parse_version
+        from desktop.version_check import _parse_version
 
         assert _parse_version("1.0.0") == (1, 0, 0, 1)
 
     def test_v_prefix_stripped(self):
-        from grouper.version_check import _parse_version
+        from desktop.version_check import _parse_version
 
         assert _parse_version("v1.2.3") == (1, 2, 3, 1)
 
     def test_pep440_prerelease(self):
-        from grouper.version_check import _parse_version
+        from desktop.version_check import _parse_version
 
         assert _parse_version("1.0.0rc1") == (1, 0, 0, 0)
 
     def test_semver_prerelease(self):
-        from grouper.version_check import _parse_version
+        from desktop.version_check import _parse_version
 
         assert _parse_version("1.0.0-rc.1") == (1, 0, 0, 0)
 
     def test_two_part_version_padded(self):
-        from grouper.version_check import _parse_version
+        from desktop.version_check import _parse_version
 
         assert _parse_version("1.0") == (1, 0, 0, 1)
 
     def test_release_greater_than_older_release(self):
-        from grouper.version_check import _parse_version
+        from desktop.version_check import _parse_version
 
         assert _parse_version("2.0.0") > _parse_version("1.9.9")
 
     def test_release_greater_than_prerelease(self):
-        from grouper.version_check import _parse_version
+        from desktop.version_check import _parse_version
 
         assert _parse_version("1.0.0") > _parse_version("1.0.0rc1")
 
     def test_prerelease_variants_same_bucket(self):
-        from grouper.version_check import _parse_version
+        from desktop.version_check import _parse_version
 
         pep440 = _parse_version("1.0.0rc2")
         semver = _parse_version("1.0.0-rc.1")
@@ -1156,7 +1156,7 @@ class TestParseVersion:
 
 class TestSetActivityGroupsLocking:
     def test_set_groups_with_new_group_names(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             get_activity_groups,
             set_activity_groups,
         )
@@ -1167,7 +1167,7 @@ class TestSetActivityGroupsLocking:
         assert result == ["NewGroup1", "NewGroup2"]
 
     def test_set_groups_replaces_existing(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             get_activity_groups,
             set_activity_groups,
@@ -1181,7 +1181,7 @@ class TestSetActivityGroupsLocking:
         assert "OldGroup" not in result
 
     def test_set_groups_empty_list_clears(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             get_activity_groups,
             set_activity_groups,
@@ -1193,7 +1193,7 @@ class TestSetActivityGroupsLocking:
         assert get_activity_groups(aid) == []
 
     def test_set_groups_max_three(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             get_activity_groups,
             set_activity_groups,
         )
@@ -1204,7 +1204,7 @@ class TestSetActivityGroupsLocking:
         assert len(result) == 3
 
     def test_set_groups_strips_whitespace(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             get_activity_groups,
             set_activity_groups,
         )
@@ -1215,7 +1215,7 @@ class TestSetActivityGroupsLocking:
         assert result == ["Padded"]
 
     def test_set_groups_skips_empty_names(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             get_activity_groups,
             set_activity_groups,
         )
@@ -1226,7 +1226,7 @@ class TestSetActivityGroupsLocking:
         assert result == ["Valid"]
 
     def test_set_groups_mixed_existing_and_new(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             create_group,
             get_activity_groups,
             set_activity_groups,
@@ -1246,7 +1246,7 @@ class TestSetActivityGroupsLocking:
 
 class TestBackupDatabase:
     def test_backup_creates_file_in_specified_directory(self, tmp_path: Path):
-        from grouper.database.connection import backup_database
+        from desktop.database.connection import backup_database
 
         backup_dir = tmp_path / "backups"
         result = backup_database(backup_dir=backup_dir, filename="test_backup.db")
@@ -1256,7 +1256,7 @@ class TestBackupDatabase:
     def test_backup_file_is_valid_sqlite(self, tmp_path: Path):
         import sqlite3 as _sqlite3
 
-        from grouper.database.connection import backup_database
+        from desktop.database.connection import backup_database
 
         backup_dir = tmp_path / "backups"
         backup_database(backup_dir=backup_dir, filename="valid.db")
@@ -1267,13 +1267,13 @@ class TestBackupDatabase:
         assert result[0] == "ok"
 
     def test_backup_returns_true_on_success(self, tmp_path: Path):
-        from grouper.database.connection import backup_database
+        from desktop.database.connection import backup_database
 
         result = backup_database(backup_dir=tmp_path, filename="success.db")
         assert result is True
 
     def test_backup_auto_generates_timestamped_filename(self, tmp_path: Path):
-        from grouper.database.connection import backup_database
+        from desktop.database.connection import backup_database
 
         backup_database(backup_dir=tmp_path)
         files = list(tmp_path.glob("grouper_backup_*.db"))
@@ -1287,25 +1287,25 @@ class TestBackupDatabase:
 
 class TestPathAccessors:
     def test_get_data_directory_returns_path(self):
-        from grouper.database.connection import get_data_directory
+        from desktop.database.connection import get_data_directory
 
         result = get_data_directory()
         assert isinstance(result, Path)
 
     def test_get_database_path_returns_path(self):
-        from grouper.database.connection import get_database_path
+        from desktop.database.connection import get_database_path
 
         result = get_database_path()
         assert isinstance(result, Path)
 
     def test_get_database_path_ends_in_db(self):
-        from grouper.database.connection import get_database_path
+        from desktop.database.connection import get_database_path
 
         result = get_database_path()
         assert result.suffix == ".db"
 
     def test_database_path_is_inside_data_directory(self):
-        from grouper.database.connection import get_data_directory, get_database_path
+        from desktop.database.connection import get_data_directory, get_database_path
 
         data_dir = get_data_directory()
         db_path = get_database_path()
@@ -1319,13 +1319,13 @@ class TestPathAccessors:
 
 class TestVersionTracking:
     def test_get_version_returns_int(self):
-        from grouper.database.connection import get_version
+        from desktop.database.connection import get_version
 
         result = get_version()
         assert isinstance(result, int)
 
     def test_bump_version_increments(self):
-        from grouper.database.connection import bump_version, get_version
+        from desktop.database.connection import bump_version, get_version
 
         before = get_version()
         bump_version()
@@ -1333,7 +1333,7 @@ class TestVersionTracking:
         assert after == before + 1
 
     def test_multiple_bumps_increment_correctly(self):
-        from grouper.database.connection import bump_version, get_version
+        from desktop.database.connection import bump_version, get_version
 
         before = get_version()
         bump_version()
@@ -1350,7 +1350,7 @@ class TestVersionTracking:
 
 class TestSetArchived:
     def test_archive_activity(self):
-        from grouper.database.connection import get_connection, set_archived
+        from desktop.database.connection import get_connection, set_archived
 
         aid = _make_activity("ArchiveMe")
         set_archived("activities", aid, True)
@@ -1363,7 +1363,7 @@ class TestSetArchived:
         assert row["archived_at"] is not None
 
     def test_unarchive_activity(self):
-        from grouper.database.connection import get_connection, set_archived
+        from desktop.database.connection import get_connection, set_archived
 
         aid = _make_activity("UnarchiveMe")
         set_archived("activities", aid, True)
@@ -1377,13 +1377,13 @@ class TestSetArchived:
         assert row["archived_at"] is None
 
     def test_invalid_table_raises_value_error(self):
-        from grouper.database.connection import set_archived
+        from desktop.database.connection import set_archived
 
         with pytest.raises(ValueError, match="Cannot archive table"):
             set_archived("nonexistent_table", 1, True)
 
     def test_archive_project(self):
-        from grouper.database.connection import get_connection, set_archived
+        from desktop.database.connection import get_connection, set_archived
 
         bid = _make_board("ArchBoard")
         pid = _make_project(bid, "ArchProject")
@@ -1404,12 +1404,12 @@ class TestSetArchived:
 
 class TestGetEventForTask:
     def _make_calendar(self) -> int:
-        from grouper.database.calendars import create_calendar
+        from desktop.database.calendars import create_calendar
 
         return create_calendar("EvtTaskCal").id
 
     def test_returns_event_linked_to_task(self):
-        from grouper.database.events import create_event, get_event_for_task
+        from desktop.database.events import create_event, get_event_for_task
 
         cal_id = self._make_calendar()
         bid = _make_board("EvtTaskBoard")
@@ -1425,7 +1425,7 @@ class TestGetEventForTask:
         assert result.linked_task_id == tid
 
     def test_returns_none_when_no_linked_event(self):
-        from grouper.database.events import get_event_for_task
+        from desktop.database.events import get_event_for_task
 
         bid = _make_board("NoEvtBoard")
         pid = _make_project(bid, "NoEvtProject")
@@ -1435,8 +1435,8 @@ class TestGetEventForTask:
 
 class TestDeleteEvent:
     def test_deletes_existing_event(self):
-        from grouper.database.calendars import create_calendar
-        from grouper.database.events import create_event, delete_event, get_event
+        from desktop.database.calendars import create_calendar
+        from desktop.database.events import create_event, delete_event, get_event
 
         cal = create_calendar("DelEvtCal")
         start = datetime(2025, 9, 1, 10, 0, 0)
@@ -1447,15 +1447,15 @@ class TestDeleteEvent:
         assert get_event(evt.id) is None
 
     def test_delete_nonexistent_event_does_not_raise(self):
-        from grouper.database.events import delete_event
+        from desktop.database.events import delete_event
 
         delete_event(999999)
 
 
 class TestUpdateEvent:
     def test_updates_title(self):
-        from grouper.database.calendars import create_calendar
-        from grouper.database.events import create_event, get_event, update_event
+        from desktop.database.calendars import create_calendar
+        from desktop.database.events import create_event, get_event, update_event
 
         cal = create_calendar("UpdEvtCal")
         start = datetime(2025, 10, 1, 9, 0, 0)
@@ -1467,8 +1467,8 @@ class TestUpdateEvent:
         assert fetched.title == "Updated Title"
 
     def test_updates_description_and_location(self):
-        from grouper.database.calendars import create_calendar
-        from grouper.database.events import create_event, get_event, update_event
+        from desktop.database.calendars import create_calendar
+        from desktop.database.events import create_event, get_event, update_event
 
         cal = create_calendar("UpdEvtCal2")
         start = datetime(2025, 10, 2, 9, 0, 0)
@@ -1480,8 +1480,8 @@ class TestUpdateEvent:
         assert fetched.location == "New loc"
 
     def test_updates_datetime_fields(self):
-        from grouper.database.calendars import create_calendar
-        from grouper.database.events import create_event, get_event, update_event
+        from desktop.database.calendars import create_calendar
+        from desktop.database.events import create_event, get_event, update_event
 
         cal = create_calendar("UpdEvtCal3")
         start = datetime(2025, 10, 3, 9, 0, 0)
@@ -1495,8 +1495,8 @@ class TestUpdateEvent:
         assert fetched.end_dt == new_end
 
     def test_ignores_disallowed_keys(self):
-        from grouper.database.calendars import create_calendar
-        from grouper.database.events import create_event, get_event, update_event
+        from desktop.database.calendars import create_calendar
+        from desktop.database.events import create_event, get_event, update_event
 
         cal = create_calendar("UpdEvtCal4")
         start = datetime(2025, 10, 4, 9, 0, 0)
@@ -1515,7 +1515,7 @@ class TestUpdateEvent:
 
 class TestCalendarCRUD:
     def test_create_and_get_round_trip(self):
-        from grouper.database.calendars import create_calendar, get_calendar
+        from desktop.database.calendars import create_calendar, get_calendar
 
         cal = create_calendar("Round Trip Cal", color="#aabbcc")
         assert cal.id is not None
@@ -1527,7 +1527,7 @@ class TestCalendarCRUD:
         assert fetched.color == "#aabbcc"
 
     def test_list_calendars_returns_created(self):
-        from grouper.database.calendars import create_calendar, list_calendars
+        from desktop.database.calendars import create_calendar, list_calendars
 
         cal = create_calendar("Listed Cal")
         cals = list_calendars()
@@ -1535,7 +1535,7 @@ class TestCalendarCRUD:
         assert cal.name in names
 
     def test_update_calendar_changes_fields(self):
-        from grouper.database.calendars import create_calendar, get_calendar, update_calendar
+        from desktop.database.calendars import create_calendar, get_calendar, update_calendar
 
         cal = create_calendar("Upd Cal", color="#111111")
         update_calendar(cal.id, name="Renamed Cal", color="#222222")
@@ -1544,7 +1544,7 @@ class TestCalendarCRUD:
         assert fetched.color == "#222222"
 
     def test_archive_calendar_hides_from_default_list(self):
-        from grouper.database.calendars import (
+        from desktop.database.calendars import (
             archive_calendar,
             create_calendar,
             list_calendars,
@@ -1557,7 +1557,7 @@ class TestCalendarCRUD:
         assert cal.id not in default_ids
 
     def test_list_calendars_include_archived_shows_archived(self):
-        from grouper.database.calendars import (
+        from desktop.database.calendars import (
             archive_calendar,
             create_calendar,
             list_calendars,
@@ -1582,7 +1582,7 @@ class TestTaskLinkCRUD:
         return _make_task(pid, "Link Task")
 
     def test_add_and_get_links_round_trip(self):
-        from grouper.database.task_links import add_link, get_links_for_task
+        from desktop.database.task_links import add_link, get_links_for_task
 
         tid = self._setup_task()
         link = add_link(tid, "https://example.com", label="Example")
@@ -1595,7 +1595,7 @@ class TestTaskLinkCRUD:
         assert links[0].url == "https://example.com"
 
     def test_update_link_changes_url(self):
-        from grouper.database.task_links import add_link, get_links_for_task, update_link
+        from desktop.database.task_links import add_link, get_links_for_task, update_link
 
         tid = self._setup_task()
         link = add_link(tid, "https://old.com")
@@ -1605,7 +1605,7 @@ class TestTaskLinkCRUD:
         assert links[0].url == "https://new.com"
 
     def test_update_link_changes_label(self):
-        from grouper.database.task_links import add_link, get_links_for_task, update_link
+        from desktop.database.task_links import add_link, get_links_for_task, update_link
 
         tid = self._setup_task()
         link = add_link(tid, "https://example.com", label="Old Label")
@@ -1614,7 +1614,7 @@ class TestTaskLinkCRUD:
         assert links[0].label == "New Label"
 
     def test_delete_link_removes_it(self):
-        from grouper.database.task_links import add_link, delete_link, get_links_for_task
+        from desktop.database.task_links import add_link, delete_link, get_links_for_task
 
         tid = self._setup_task()
         link = add_link(tid, "https://delete-me.com")
@@ -1625,42 +1625,42 @@ class TestTaskLinkCRUD:
 
 class TestDetectLinkType:
     def test_http_url(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         assert detect_link_type("https://example.com") == "url"
 
     def test_http_without_s(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         assert detect_link_type("http://example.com") == "url"
 
     def test_file_uri(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         assert detect_link_type("file:///home/user/doc.txt") == "file"
 
     def test_unc_path(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         assert detect_link_type("\\\\server\\share\\file.txt") == "file"
 
     def test_windows_drive_letter(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         assert detect_link_type("C:\\Users\\doc.txt") == "file"
 
     def test_unix_absolute_path(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         assert detect_link_type("/home/user/doc.txt") == "file"
 
     def test_tilde_path(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         assert detect_link_type("~/Documents/file.txt") == "file"
 
     def test_bare_domain_is_url(self):
-        from grouper.database.task_links import detect_link_type
+        from desktop.database.task_links import detect_link_type
 
         assert detect_link_type("example.com") == "url"
 
@@ -1672,7 +1672,7 @@ class TestDetectLinkType:
 
 class TestProjectGetOrCreate:
     def test_creates_project_if_not_exists(self):
-        from grouper.database.projects import get_or_create_project, get_project
+        from desktop.database.projects import get_or_create_project, get_project
 
         bid = _make_board("GetOrCreateBoard")
         p = get_or_create_project("BrandNewProject", board_id=bid)
@@ -1683,7 +1683,7 @@ class TestProjectGetOrCreate:
         assert fetched.id == p.id
 
     def test_returns_existing_if_exists(self):
-        from grouper.database.projects import get_or_create_project
+        from desktop.database.projects import get_or_create_project
 
         bid = _make_board("GetOrCreateBoard2")
         p1 = get_or_create_project("ExistingProject", board_id=bid)
@@ -1694,7 +1694,7 @@ class TestProjectGetOrCreate:
 
 class TestProjectArchiveUnarchive:
     def test_archive_and_unarchive_round_trip(self):
-        from grouper.database.projects import (
+        from desktop.database.projects import (
             archive_project,
             get_project_by_id,
             unarchive_project,
@@ -1713,7 +1713,7 @@ class TestProjectArchiveUnarchive:
 
 class TestProjectRename:
     def test_rename_with_valid_name_succeeds(self):
-        from grouper.database.projects import get_project, rename_project
+        from desktop.database.projects import get_project, rename_project
 
         bid = _make_board("RenameBoard")
         _make_project(bid, "OldName")
@@ -1724,7 +1724,7 @@ class TestProjectRename:
         assert get_project("NewName") is not None
 
     def test_rename_nonexistent_returns_none(self):
-        from grouper.database.projects import rename_project
+        from desktop.database.projects import rename_project
 
         assert rename_project("NoSuchProject", "Whatever") is None
 
@@ -1736,14 +1736,14 @@ class TestProjectRename:
 
 class TestGroupCreate:
     def test_create_group_returns_group_with_correct_name(self):
-        from grouper.database.activities import create_group
+        from desktop.database.activities import create_group
 
         g = create_group("Development")
         assert g.name == "Development"
         assert g.id is not None
 
     def test_create_group_strips_whitespace(self):
-        from grouper.database.activities import create_group
+        from desktop.database.activities import create_group
 
         g = create_group("  Padded  ")
         assert g.name == "Padded"
@@ -1751,7 +1751,7 @@ class TestGroupCreate:
     def test_create_duplicate_group_raises(self):
         import sqlite3
 
-        from grouper.database.activities import create_group
+        from desktop.database.activities import create_group
 
         create_group("Unique")
         with pytest.raises(sqlite3.IntegrityError):
@@ -1760,7 +1760,7 @@ class TestGroupCreate:
 
 class TestGetOrCreateGroup:
     def test_creates_if_not_exists(self):
-        from grouper.database.activities import get_group_by_name, get_or_create_group
+        from desktop.database.activities import get_group_by_name, get_or_create_group
 
         g = get_or_create_group("Brand New")
         assert g.id is not None
@@ -1770,7 +1770,7 @@ class TestGetOrCreateGroup:
         assert fetched.id == g.id
 
     def test_returns_existing_if_exists(self):
-        from grouper.database.activities import create_group, get_or_create_group
+        from desktop.database.activities import create_group, get_or_create_group
 
         original = create_group("Existing")
         returned = get_or_create_group("Existing")
@@ -1780,7 +1780,7 @@ class TestGetOrCreateGroup:
 
 class TestGetGroupByName:
     def test_finds_by_name(self):
-        from grouper.database.activities import create_group, get_group_by_name
+        from desktop.database.activities import create_group, get_group_by_name
 
         created = create_group("FindMe")
         found = get_group_by_name("FindMe")
@@ -1789,12 +1789,12 @@ class TestGetGroupByName:
         assert found.name == "FindMe"
 
     def test_returns_none_for_unknown(self):
-        from grouper.database.activities import get_group_by_name
+        from desktop.database.activities import get_group_by_name
 
         assert get_group_by_name("NoSuchGroup") is None
 
     def test_case_insensitive_lookup(self):
-        from grouper.database.activities import create_group, get_group_by_name
+        from desktop.database.activities import create_group, get_group_by_name
 
         create_group("MixedCase")
         found = get_group_by_name("mixedcase")
@@ -1804,7 +1804,7 @@ class TestGetGroupByName:
 
 class TestGetGroupById:
     def test_finds_by_id(self):
-        from grouper.database.activities import create_group, get_group_by_id
+        from desktop.database.activities import create_group, get_group_by_id
 
         created = create_group("ById")
         found = get_group_by_id(created.id)
@@ -1812,14 +1812,14 @@ class TestGetGroupById:
         assert found.name == "ById"
 
     def test_returns_none_for_unknown_id(self):
-        from grouper.database.activities import get_group_by_id
+        from desktop.database.activities import get_group_by_id
 
         assert get_group_by_id(999999) is None
 
 
 class TestRenameGroup:
     def test_rename_succeeds_with_valid_name(self):
-        from grouper.database.activities import create_group, get_group_by_id, rename_group
+        from desktop.database.activities import create_group, get_group_by_id, rename_group
 
         g = create_group("OldGroupName")
         result = rename_group(g.id, "NewGroupName")
@@ -1828,7 +1828,7 @@ class TestRenameGroup:
         assert fetched.name == "NewGroupName"
 
     def test_rename_returns_false_for_duplicate(self):
-        from grouper.database.activities import create_group, rename_group
+        from desktop.database.activities import create_group, rename_group
 
         create_group("TakenName")
         g2 = create_group("WillRename")
@@ -1836,14 +1836,14 @@ class TestRenameGroup:
         assert result is False
 
     def test_rename_returns_false_for_empty_name(self):
-        from grouper.database.activities import create_group, rename_group
+        from desktop.database.activities import create_group, rename_group
 
         g = create_group("SomeGroup")
         result = rename_group(g.id, "   ")
         assert result is False
 
     def test_rename_returns_false_for_nonexistent_id(self):
-        from grouper.database.activities import rename_group
+        from desktop.database.activities import rename_group
 
         result = rename_group(999999, "Whatever")
         assert result is False
@@ -1851,7 +1851,7 @@ class TestRenameGroup:
 
 class TestDeleteGroup:
     def test_delete_removes_the_group(self):
-        from grouper.database.activities import create_group, delete_group, get_group_by_id
+        from desktop.database.activities import create_group, delete_group, get_group_by_id
 
         g = create_group("ToDelete")
         result = delete_group(g.id)
@@ -1859,14 +1859,14 @@ class TestDeleteGroup:
         assert get_group_by_id(g.id) is None
 
     def test_delete_nonexistent_returns_false(self):
-        from grouper.database.activities import delete_group
+        from desktop.database.activities import delete_group
 
         assert delete_group(999999) is False
 
 
 class TestListAllGroups:
     def test_returns_all_groups(self):
-        from grouper.database.activities import create_group, list_all_groups
+        from desktop.database.activities import create_group, list_all_groups
 
         create_group("GroupAlpha")
         create_group("GroupBeta")
@@ -1878,7 +1878,7 @@ class TestListAllGroups:
         assert "GroupGamma" in names
 
     def test_returns_list(self):
-        from grouper.database.activities import list_all_groups
+        from desktop.database.activities import list_all_groups
 
         groups = list_all_groups()
         assert isinstance(groups, list)
@@ -1891,7 +1891,7 @@ class TestListAllGroups:
 
 class TestAddActivityGroup:
     def test_links_activity_to_group(self):
-        from grouper.database.activities import add_activity_group, get_activity_groups
+        from desktop.database.activities import add_activity_group, get_activity_groups
 
         aid = _make_activity("LinkedAct")
         result = add_activity_group(aid, "DevGroup")
@@ -1900,14 +1900,14 @@ class TestAddActivityGroup:
         assert "DevGroup" in groups
 
     def test_duplicate_link_returns_false(self):
-        from grouper.database.activities import add_activity_group
+        from desktop.database.activities import add_activity_group
 
         aid = _make_activity("DupLinkAct")
         assert add_activity_group(aid, "SameGroup") is True
         assert add_activity_group(aid, "SameGroup") is False
 
     def test_empty_group_name_returns_false(self):
-        from grouper.database.activities import add_activity_group
+        from desktop.database.activities import add_activity_group
 
         aid = _make_activity("EmptyGrpAct")
         assert add_activity_group(aid, "") is False
@@ -1916,7 +1916,7 @@ class TestAddActivityGroup:
 
 class TestRemoveActivityGroup:
     def test_unlinks_activity_from_group(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             get_activity_groups,
             remove_activity_group,
@@ -1930,7 +1930,7 @@ class TestRemoveActivityGroup:
         assert "TempGroup" not in get_activity_groups(aid)
 
     def test_remove_nonexistent_link_returns_false(self):
-        from grouper.database.activities import remove_activity_group
+        from desktop.database.activities import remove_activity_group
 
         aid = _make_activity("NoLinkAct")
         result = remove_activity_group(aid, "NeverAdded")
@@ -1939,7 +1939,7 @@ class TestRemoveActivityGroup:
 
 class TestGetActivityGroups:
     def test_returns_group_names_for_activity(self):
-        from grouper.database.activities import add_activity_group, get_activity_groups
+        from desktop.database.activities import add_activity_group, get_activity_groups
 
         aid = _make_activity("MultiGrpAct")
         add_activity_group(aid, "GroupX")
@@ -1948,7 +1948,7 @@ class TestGetActivityGroups:
         assert sorted(groups) == ["GroupX", "GroupY"]
 
     def test_returns_empty_for_ungrouped_activity(self):
-        from grouper.database.activities import get_activity_groups
+        from desktop.database.activities import get_activity_groups
 
         aid = _make_activity("UngroupedAct")
         assert get_activity_groups(aid) == []
@@ -1956,7 +1956,7 @@ class TestGetActivityGroups:
 
 class TestSetActivityGroups:
     def test_replaces_all_groups(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             create_group,
             get_activity_groups,
@@ -1976,7 +1976,7 @@ class TestSetActivityGroups:
         assert "OldGroup2" not in groups
 
     def test_clears_groups_with_empty_list(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             get_activity_groups,
             set_activity_groups,
@@ -1988,7 +1988,7 @@ class TestSetActivityGroups:
         assert get_activity_groups(aid) == []
 
     def test_max_three_groups(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             create_group,
             get_activity_groups,
             set_activity_groups,
@@ -2005,7 +2005,7 @@ class TestSetActivityGroups:
 
 class TestGetActivitiesByGroup:
     def test_returns_activities_in_group(self):
-        from grouper.database.activities import add_activity_group, get_activities_by_group
+        from desktop.database.activities import add_activity_group, get_activities_by_group
 
         a1 = _make_activity("InGroupAct1")
         a2 = _make_activity("InGroupAct2")
@@ -2019,7 +2019,7 @@ class TestGetActivitiesByGroup:
         assert "NotInGroupAct" not in names
 
     def test_excludes_deleted_activities(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             get_activities_by_group,
             soft_delete_activity,
@@ -2033,14 +2033,14 @@ class TestGetActivitiesByGroup:
         assert "DeletedFromGroup" not in names
 
     def test_returns_empty_for_unknown_group(self):
-        from grouper.database.activities import get_activities_by_group
+        from desktop.database.activities import get_activities_by_group
 
         assert get_activities_by_group("NonexistentGroup") == []
 
 
 class TestGetUngroupedActivities:
     def test_returns_activities_with_no_groups(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             add_activity_group,
             get_ungrouped_activities,
         )
@@ -2054,7 +2054,7 @@ class TestGetUngroupedActivities:
         assert "GroupedOne" not in names
 
     def test_excludes_deleted_activities(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             get_ungrouped_activities,
             soft_delete_activity,
         )
@@ -2066,7 +2066,7 @@ class TestGetUngroupedActivities:
         assert "DeletedUngrouped" not in names
 
     def test_excludes_archived_activities(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             archive_activity,
             get_ungrouped_activities,
         )
@@ -2085,7 +2085,7 @@ class TestGetUngroupedActivities:
 
 class TestEnsureBackgroundGroup:
     def test_creates_background_group_idempotently(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             BACKGROUND_GROUP_NAME,
             ensure_background_group,
             get_group_by_name,
@@ -2100,7 +2100,7 @@ class TestEnsureBackgroundGroup:
         assert g1.id == g2.id
 
     def test_assigns_background_activities_to_background_group(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             BACKGROUND_GROUP_NAME,
             ensure_background_group,
             get_activity_groups,
@@ -2112,7 +2112,7 @@ class TestEnsureBackgroundGroup:
         assert BACKGROUND_GROUP_NAME in groups
 
     def test_does_not_affect_non_background_activities(self):
-        from grouper.database.activities import (
+        from desktop.database.activities import (
             BACKGROUND_GROUP_NAME,
             ensure_background_group,
             get_activity_groups,
@@ -2131,20 +2131,20 @@ class TestEnsureBackgroundGroup:
 
 class TestStartOfDay:
     def test_truncates_time(self):
-        from grouper.formatting import start_of_day
+        from desktop.formatting import start_of_day
 
         dt = datetime(2026, 3, 26, 14, 30, 45, 123456)
         result = start_of_day(dt)
         assert result == datetime(2026, 3, 26, 0, 0, 0, 0)
 
     def test_midnight_is_noop(self):
-        from grouper.formatting import start_of_day
+        from desktop.formatting import start_of_day
 
         dt = datetime(2026, 3, 26, 0, 0, 0, 0)
         assert start_of_day(dt) == dt
 
     def test_preserves_date(self):
-        from grouper.formatting import start_of_day
+        from desktop.formatting import start_of_day
 
         dt = datetime(2026, 12, 31, 23, 59, 59)
         result = start_of_day(dt)
@@ -2170,16 +2170,16 @@ class TestAllExports:
             assert hasattr(mod, name), f"{module_path}.__all__ lists '{name}' but it doesn't exist"
 
     def test_formatting_all(self):
-        self._check_all("grouper.formatting")
+        self._check_all("desktop.formatting")
 
     def test_operations_all(self):
-        self._check_all("grouper.operations")
+        self._check_all("desktop.operations")
 
     def test_config_all(self):
-        self._check_all("grouper.config")
+        self._check_all("desktop.config")
 
     def test_models_all(self):
-        self._check_all("grouper.models")
+        self._check_all("desktop.models")
 
     def test_version_check_all(self):
-        self._check_all("grouper.version_check")
+        self._check_all("desktop.version_check")

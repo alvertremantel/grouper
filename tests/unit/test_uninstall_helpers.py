@@ -1,11 +1,11 @@
-"""Tests for uninstall helper functions in grouper_install/setup.py."""
+"""Tests for uninstall helper functions in installer/setup.py."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
-from grouper_install.setup import (
+from installer.setup import (
     _copy_installer_to_stable_location,
     _remove_dir_safe,
     _remove_empty_parent,

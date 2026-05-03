@@ -2,27 +2,35 @@
 
 ## Current State
 
-- App, CLI, server, and Windows installer all working. Four release variants: `core`, `core_cli`, `core_server`, `core_cli_server`.
-- Installer: machine-wide install, elevation, PATH, manifest, ARP, upgrade detection, uninstall.
-- Dialogs: no top-level translucency, `WA_StyledBackground` on container/title/content, dialog surface tokens per theme, `#card`-scoped QSS prevents bleed-through. See `.agents/context/qt-pitfalls.md`.
-- Tests: widget tests (no pywinauto). Root autouse fixture sandboxes DB + config paths; no test writes to `~/.grouper/`. DB init only inside `main()`, not at import time.
-
-## Recent Changes
-
-- **Summary bars**: recompute `MiniBarTrend` colors on `QEvent.PaletteChange`; zero-value trend bars now blend from active `bg-secondary` instead of a nonexistent `card_bg` fallback, covering DARK to SAGE switches with mixed zero/nonzero days.
-- **Black dialogs**: black-theme dialog title bar now uses the existing tertiary black surface so non-parented dialog chrome remains perceptibly distinct from the page while body/content stay on standard black surfaces.
-- **Animation tuning**: shortened full-page slide, session-card, task-card expand/collapse, splash spinner, and activity-week pulse intervals to reduce repaint/layout pressure. `task_board.py` nullability issues fixed while touching animation code.
-- **Activity renames**: `editingFinished` signal (not `returnPressed`) for both `_ActivityDetailEditor` and `_GroupSection`; empty renames revert UI. Covered by `test_activity_config.py`.
-- **Test isolation**: conftest patches `grouper_core.config`, re-exported `grouper.config`, and `ConfigManager._instance` **before** calling `_init_paths()` so `_save_data_directory()` always writes to the temp dir. `db_path.txt` routed through `APP_DIR`. Regression tests in `test_test_isolation.py` and `test_sync_entrypoint_import.py`.
-- **Dialog QSS**: consolidated `#card` selectors into base rules; `EditTaskDialog` warns on missing prereq `id`.
+- Server refactor is complete on this branch: sync lives in `grouper_sync/`, the unified server lives in `server/`. The old `grouper_server/` package no longer exists.
+- Textual/TUI has been removed; `grouper-server` is the external command pointing to `server.__main__:main`.
+- Desktop package renamed from `grouper/` to `desktop/`; core remains `grouper_core`, CLI remains `cli`.
+- `desktop/ui/` is domain-organized into `shared/`, `time/`, `tasks/`, `calendar/`, and `views/`.
+- Tests and package metadata use `desktop.*` imports; the installed GUI command is still `grouper` and points at `desktop.main:main`.
 
 ## Active Work
 
-- No active blockers. If animations still feel laggy, next step is snapshot-based page transitions or disabling sidebar page-slide animations for heavy views.
-- Dialog translucency and blocky list-item styling must remain disabled.
+- Server refactor review fixes applied; no remaining active work on this branch.
+- Do not run monolithic `python -m pytest`; split by test group.
+
+## Recent Changes
+
+- Applied review fixes to `grouper_sync/__main__.py`: renamed prog from `grouper-server` to `grouper-sync`, added port validation (ValueError + range check), and null-safe device-id formatting in status output.
+- Added `tests/unit/sync/test_sync_cli.py` with port validation tests (non-integer and out-of-range).
+- Fixed test ordering fragility in `test_sync_entrypoint_import.py`: switched from dotted-path monkeypatch to direct module object patching to avoid stale-object issues after `sys.modules` swaps.
+- Removed stale `__version__ = "0.1.0"` from `server/__init__.py` (nothing reads it; project version is in `pyproject.toml`).
+- Updated `.agents/context/MAP.md` to reflect `server/` + `grouper_sync/` layout.
+- Added `tests/unit/test_package_boundaries.py` and `tests/unit/server/test_cli.py` to enforce package boundaries and TUI removal.
 
 ## Verification
 
-- `ruff check .` clean. Split pytest chunks pass: CLI, integration, unit core/db/sync/top-level, and widget groups. `ty check .` still reports pre-existing broad test/model nullability and Qt-stub diagnostics unrelated to the Summary/theme changes.
-- Animation targeted checks clean: `ruff check` and `ty check` on touched UI files; widget tests `test_animated_stack.py`, `test_activity_week.py`, `test_main_window.py`, `test_task_board_drag.py`, and `test_dashboard_layout.py` passed (`62 passed`).
-- Previous broad baseline: `ruff check .` clean; `pytest` 530/531 with one pre-existing `win32com` import failure.
+- Sync tests: `python -m pytest tests/unit/sync -v` → `87 passed` (includes 2 new port validation tests).
+- Server tests: `python -m pytest tests/unit/server -v` → `20 passed`.
+- Package boundaries: `python -m pytest tests/unit/test_package_boundaries.py -v` → `15 passed`.
+- CLI group: `python -m pytest tests/cli` → `104 passed`.
+- Core unit group: `python -m pytest tests/unit/core` → `22 passed`.
+- DB unit group: `python -m pytest tests/unit/db` → `290 passed`.
+- Ruff lint: `ruff check server grouper_sync desktop tests` → clean.
+- Refactor format check: `ruff format --check server grouper_sync tests/unit/server tests/unit/test_package_boundaries.py tests/cli/test_parser.py` → clean.
+- Smoke test: `python -m grouper_sync --help` displays `grouper-sync` as prog name.
+- Widget batches completed except `tests/widget/test_title_bar_unit.py` (Windows access-violation in this environment). Passing batches: batch 1 (`59 passed`), batch 2 (`75 passed`), `test_theme_load.py` (`12 passed`), `test_theme_validation.py` (`11 passed`), `test_transparency.py` (`34 passed`).

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from grouper_cli.main import build_parser
+
+from cli.main import build_parser
 
 
 @pytest.fixture

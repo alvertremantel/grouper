@@ -2,8 +2,8 @@
 
 from datetime import date, datetime
 
-from grouper.models import Session
-from grouper.ui.activity_week import (
+from desktop.models import Session
+from desktop.ui.time.activity_week import (
     _GRID_H,
     _TOP,
     HOUR_HEIGHT,

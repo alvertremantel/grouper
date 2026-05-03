@@ -1,12 +1,12 @@
-"""Tests for grouper_install/registry.py."""
+"""Tests for installer/registry.py."""
 
 from __future__ import annotations
 
 import winreg
 from unittest.mock import MagicMock, patch
 
-from grouper_install.manifest import InstallManifest
-from grouper_install.registry import register_uninstall, unregister_uninstall
+from installer.manifest import InstallManifest
+from installer.registry import register_uninstall, unregister_uninstall
 
 
 def _sample_manifest() -> InstallManifest:
@@ -27,10 +27,10 @@ class TestRegisterUninstall:
         manifest = _sample_manifest()
 
         with (
-            patch("grouper_install.registry.winreg.CreateKeyEx", return_value=mock_key),
-            patch("grouper_install.registry.winreg.SetValueEx") as mock_set,
-            patch("grouper_install.registry.winreg.CloseKey"),
-            patch("grouper_install.registry.Path.exists", return_value=False),
+            patch("installer.registry.winreg.CreateKeyEx", return_value=mock_key),
+            patch("installer.registry.winreg.SetValueEx") as mock_set,
+            patch("installer.registry.winreg.CloseKey"),
+            patch("installer.registry.Path.exists", return_value=False),
         ):
             register_uninstall(manifest)
 
@@ -46,10 +46,10 @@ class TestRegisterUninstall:
         manifest = _sample_manifest()
 
         with (
-            patch("grouper_install.registry.winreg.CreateKeyEx", return_value=mock_key),
-            patch("grouper_install.registry.winreg.SetValueEx") as mock_set,
-            patch("grouper_install.registry.winreg.CloseKey"),
-            patch("grouper_install.registry.Path.exists", return_value=False),
+            patch("installer.registry.winreg.CreateKeyEx", return_value=mock_key),
+            patch("installer.registry.winreg.SetValueEx") as mock_set,
+            patch("installer.registry.winreg.CloseKey"),
+            patch("installer.registry.Path.exists", return_value=False),
         ):
             register_uninstall(manifest)
 
@@ -70,10 +70,10 @@ class TestRegisterUninstall:
         )
 
         with (
-            patch("grouper_install.registry.winreg.CreateKeyEx", return_value=mock_key),
-            patch("grouper_install.registry.winreg.SetValueEx") as mock_set,
-            patch("grouper_install.registry.winreg.CloseKey"),
-            patch("grouper_install.registry.Path.exists", return_value=False),
+            patch("installer.registry.winreg.CreateKeyEx", return_value=mock_key),
+            patch("installer.registry.winreg.SetValueEx") as mock_set,
+            patch("installer.registry.winreg.CloseKey"),
+            patch("installer.registry.Path.exists", return_value=False),
         ):
             register_uninstall(manifest)
 
@@ -86,10 +86,10 @@ class TestRegisterUninstall:
         manifest = _sample_manifest()
 
         with (
-            patch("grouper_install.registry.winreg.CreateKeyEx", return_value=mock_key),
-            patch("grouper_install.registry.winreg.SetValueEx") as mock_set,
-            patch("grouper_install.registry.winreg.CloseKey"),
-            patch("grouper_install.registry.Path.exists", return_value=False),
+            patch("installer.registry.winreg.CreateKeyEx", return_value=mock_key),
+            patch("installer.registry.winreg.SetValueEx") as mock_set,
+            patch("installer.registry.winreg.CloseKey"),
+            patch("installer.registry.Path.exists", return_value=False),
         ):
             register_uninstall(manifest)
 
@@ -101,7 +101,7 @@ class TestRegisterUninstall:
 
 class TestUnregisterUninstall:
     def test_deletes_key(self) -> None:
-        with patch("grouper_install.registry.winreg.DeleteKey") as mock_delete:
+        with patch("installer.registry.winreg.DeleteKey") as mock_delete:
             unregister_uninstall()
             mock_delete.assert_called_once_with(
                 winreg.HKEY_LOCAL_MACHINE,

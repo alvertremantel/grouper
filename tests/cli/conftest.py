@@ -22,7 +22,7 @@ def run_cli():
     import sys
     from types import SimpleNamespace
 
-    from grouper_cli.main import main
+    from cli.main import main
 
     def _run(*args: str) -> SimpleNamespace:
         out, err = io.StringIO(), io.StringIO()

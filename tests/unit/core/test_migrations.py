@@ -28,7 +28,7 @@ def isolated_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     data_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("GROUPER_DATA_DIR", str(data_dir))
 
-    import grouper.database.connection as conn_mod
+    import desktop.database.connection as conn_mod
 
     conn_mod._init_paths()
 
@@ -42,7 +42,7 @@ def isolated_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def _init_schema_only() -> None:
     """Run _INITIAL_SCHEMA without migrations (simulates a fresh DB before runner)."""
-    import grouper.database.connection as conn_mod
+    import desktop.database.connection as conn_mod
 
     with conn_mod.get_connection() as conn:
         conn.executescript(conn_mod._INITIAL_SCHEMA)
@@ -51,7 +51,7 @@ def _init_schema_only() -> None:
 
 def _set_version(version: int) -> None:
     """Set schema_version directly, bypassing the migration runner."""
-    import grouper.database.connection as conn_mod
+    import desktop.database.connection as conn_mod
 
     with conn_mod.get_connection() as conn:
         conn_mod._set_schema_version(conn.raw_connection, version)
@@ -59,14 +59,14 @@ def _set_version(version: int) -> None:
 
 
 def _get_version() -> int:
-    import grouper.database.connection as conn_mod
+    import desktop.database.connection as conn_mod
 
     with conn_mod.get_connection() as conn:
         return conn_mod._get_schema_version(conn.raw_connection)
 
 
 def _get_migration_rows() -> list[dict]:
-    import grouper.database.connection as conn_mod
+    import desktop.database.connection as conn_mod
 
     with conn_mod.get_connection() as conn:
         try:
@@ -79,7 +79,7 @@ def _get_migration_rows() -> list[dict]:
 
 
 def _table_exists(name: str) -> bool:
-    import grouper.database.connection as conn_mod
+    import desktop.database.connection as conn_mod
 
     with conn_mod.get_connection() as conn:
         row = conn.execute(
@@ -90,7 +90,7 @@ def _table_exists(name: str) -> bool:
 
 
 def _get_backup_dir() -> Path:
-    import grouper.database.connection as conn_mod
+    import desktop.database.connection as conn_mod
 
     return conn_mod.DATA_DIR / "backups"
 
@@ -102,14 +102,14 @@ def _get_backup_dir() -> Path:
 
 class TestDiscovery:
     def test_discovers_all_migrations(self) -> None:
-        from grouper.database.migrations import _discover_migrations
+        from desktop.database.migrations import _discover_migrations
 
         mods = _discover_migrations()
         assert len(mods) == 23
         assert [m.VERSION for m in mods] == list(range(1, 24))
 
     def test_all_have_required_attributes(self) -> None:
-        from grouper.database.migrations import _discover_migrations
+        from desktop.database.migrations import _discover_migrations
 
         for mod in _discover_migrations():
             assert hasattr(mod, "VERSION")
@@ -125,13 +125,13 @@ class TestDiscovery:
 
 class TestFreshDatabase:
     def test_init_database_sets_version_15(self) -> None:
-        import grouper.database.connection as conn_mod
+        import desktop.database.connection as conn_mod
 
         conn_mod.init_database()
         assert _get_version() == 23
 
     def test_all_migrations_recorded(self) -> None:
-        import grouper.database.connection as conn_mod
+        import desktop.database.connection as conn_mod
 
         conn_mod.init_database()
         rows = _get_migration_rows()
@@ -140,7 +140,7 @@ class TestFreshDatabase:
         assert rows[22]["version"] == 23
 
     def test_all_tables_created(self) -> None:
-        import grouper.database.connection as conn_mod
+        import desktop.database.connection as conn_mod
 
         conn_mod.init_database()
         expected = [
@@ -173,7 +173,7 @@ class TestFreshDatabase:
 
 class TestLegacyBootstrap:
     def test_existing_v7_no_additional_backup(self, tmp_path: Path) -> None:
-        import grouper.database.connection as conn_mod
+        import desktop.database.connection as conn_mod
 
         # Simulate a v7 database without _migrations
         conn_mod.init_database()
@@ -198,7 +198,7 @@ class TestLegacyBootstrap:
         assert after == before
 
     def test_bootstrap_uses_correct_descriptions(self) -> None:
-        import grouper.database.connection as conn_mod
+        import desktop.database.connection as conn_mod
 
         conn_mod.init_database()
         with conn_mod.get_connection() as conn:
@@ -218,13 +218,13 @@ class TestLegacyBootstrap:
 
 class TestPartialUpgrade:
     def test_v5_to_v7_applies_missing(self) -> None:
-        import grouper.database.connection as conn_mod
+        import desktop.database.connection as conn_mod
 
         # Create a fresh DB at v5
         _init_schema_only()
         with conn_mod.get_connection() as conn:
             raw = conn.raw_connection
-            from grouper.database.migrations import (
+            from desktop.database.migrations import (
                 _discover_migrations,
                 _ensure_migrations_table,
                 run_pending_migrations,
@@ -253,13 +253,13 @@ class TestPartialUpgrade:
         assert len(rows) == 23
 
     def test_partial_upgrade_creates_backup(self, tmp_path: Path) -> None:
-        import grouper.database.connection as conn_mod
+        import desktop.database.connection as conn_mod
 
         # Create a DB at v5
         _init_schema_only()
         with conn_mod.get_connection() as conn:
             raw = conn.raw_connection
-            from grouper.database.migrations import (
+            from desktop.database.migrations import (
                 _discover_migrations,
                 _ensure_migrations_table,
                 run_pending_migrations,
@@ -292,8 +292,8 @@ class TestPartialUpgrade:
 
 class TestBackup:
     def test_backup_filename_pattern(self) -> None:
-        import grouper.database.connection as conn_mod
-        from grouper.database.migrations import _backup_before_migration
+        import desktop.database.connection as conn_mod
+        from desktop.database.migrations import _backup_before_migration
 
         # Create the DB file first
         conn_mod.init_database()
@@ -305,7 +305,7 @@ class TestBackup:
         assert backups[0].suffix == ".db"
 
     def test_retention_keeps_only_3(self, tmp_path: Path) -> None:
-        from grouper.database.migrations import _cleanup_migration_backups
+        from desktop.database.migrations import _cleanup_migration_backups
 
         # isolated_db already points DATA_DIR at a temp directory
         backup_dir = _get_backup_dir()
@@ -335,8 +335,8 @@ class TestMigrationIdempotency:
     def test_each_migration_runs_on_fresh_schema(self) -> None:
         """Each migration's upgrade() should run cleanly on a DB that already
         has all tables from _INITIAL_SCHEMA (fresh install scenario)."""
-        import grouper.database.connection as conn_mod
-        from grouper.database.migrations import _discover_migrations
+        import desktop.database.connection as conn_mod
+        from desktop.database.migrations import _discover_migrations
 
         _init_schema_only()
         mods = _discover_migrations()

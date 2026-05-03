@@ -7,7 +7,7 @@ import json
 import sys
 from datetime import datetime, timedelta
 
-from grouper_cli.output import print_error, print_json, print_kv, print_table
+from cli.output import print_error, print_json, print_kv, print_table
 
 
 def _capture(fn, *args, **kwargs) -> str:

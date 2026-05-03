@@ -1,5 +1,5 @@
 @echo off
-REM build_setup.bat — Compile grouper_install/setup.py to setup.exe via Nuitka
+REM build_setup.bat — Compile installer/setup.py to setup.exe via Nuitka
 REM
 REM Run from the project root with the venv active:
 REM   .venv\Scripts\activate
@@ -59,7 +59,7 @@ python -m nuitka ^
     --output-filename=setup.exe ^
     --output-dir=dist ^
     --jobs=2 ^
-    grouper_install\setup.py
+    installer\setup.py
 
 if errorlevel 1 (
     echo.

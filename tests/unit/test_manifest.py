@@ -1,4 +1,4 @@
-"""Tests for grouper_install/manifest.py."""
+"""Tests for installer/manifest.py."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
-from grouper_install.manifest import (
+from installer.manifest import (
     InstallManifest,
     read_manifest,
     remove_manifest,
@@ -16,8 +16,8 @@ from grouper_install.manifest import (
 
 @pytest.fixture(autouse=True)
 def _override_manifest_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("grouper_install.manifest.MANIFEST_DIR", tmp_path / "Grouper")
-    monkeypatch.setattr("grouper_install.manifest.MANIFEST_FILE", tmp_path / "Grouper" / "install-manifest.json")
+    monkeypatch.setattr("installer.manifest.MANIFEST_DIR", tmp_path / "Grouper")
+    monkeypatch.setattr("installer.manifest.MANIFEST_FILE", tmp_path / "Grouper" / "install-manifest.json")
 
 
 def _sample_manifest() -> InstallManifest:

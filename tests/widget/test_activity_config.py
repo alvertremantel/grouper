@@ -1,7 +1,7 @@
 """Tests for activity_config widget — rename persistence on focus loss."""
 
-from grouper.database.activities import create_activity, get_activity_by_id
-from grouper.ui.activity_config import _ActivityDetailEditor
+from desktop.database.activities import create_activity, get_activity_by_id
+from desktop.ui.time.activity_config import _ActivityDetailEditor
 from PySide6.QtWidgets import QApplication
 
 
@@ -78,11 +78,11 @@ class TestActivityRenameOnEditingFinished:
 
 class TestGroupSectionRename:
     def test_group_section_editing_finished_persists_rename(self, qapp: QApplication) -> None:
-        from grouper.database.activities import create_group, list_all_groups
+        from desktop.database.activities import create_group, list_all_groups
         create_group("Original Group")
         group = next(g for g in list_all_groups() if g.name == "Original Group")
 
-        from grouper.ui.activity_config import _GroupSection
+        from desktop.ui.time.activity_config import _GroupSection
         section = _GroupSection(group)
         section.show()
         qapp.processEvents()
@@ -102,11 +102,11 @@ class TestGroupSectionRename:
         assert refreshed.name == "Renamed Group"
 
     def test_group_section_empty_rename_aborts(self, qapp: QApplication) -> None:
-        from grouper.database.activities import create_group, list_all_groups
+        from desktop.database.activities import create_group, list_all_groups
         create_group("Stable Group")
         group = next(g for g in list_all_groups() if g.name == "Stable Group")
 
-        from grouper.ui.activity_config import _GroupSection
+        from desktop.ui.time.activity_config import _GroupSection
         section = _GroupSection(group)
         section.show()
         qapp.processEvents()

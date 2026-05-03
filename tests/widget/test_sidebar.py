@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from grouper.app import MainWindow
+from desktop.app import MainWindow
 
 pytestmark = pytest.mark.widget
 
